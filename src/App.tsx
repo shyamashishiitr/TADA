@@ -1,13 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTasks } from './hooks/useTasks';
 import { TaskItem } from './components/TaskItem';
 import { AddTask } from './components/AddTask';
-import { TaskCategory } from './types';
+import type { TaskCategory } from './types';
 
 function App() {
   const { tasks, addTask, deleteTask, toggleComplete, updateTask } = useTasks();
   const [filter, setFilter] = useState<TaskCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const filteredTasks = tasks.filter((task) => {
     if (!showCompleted && task.completed) return false;
@@ -19,19 +32,50 @@ function App() {
   const completedTasks = tasks.filter((t) => t.completed).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      darkMode 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+        : 'bg-gradient-to-br from-blue-50 to-indigo-100'
+    }`}>
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            TADA ✨
-          </h1>
-          <p className="text-gray-600">Get Shit Done, Geshido Style</p>
-          <div className="flex gap-4 mt-4 text-sm">
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className={`text-3xl sm:text-4xl font-bold transition-colors ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+              TADA ✨
+            </h1>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                darkMode 
+                  ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+          </div>
+          <p className={`transition-colors ${
+            darkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            Get Shit Done, Geshido Style
+          </p>
+          <div className="flex gap-4 mt-4 text-sm flex-wrap">
+            <span className={`px-3 py-1 rounded-full transition-colors ${
+              darkMode 
+                ? 'bg-blue-900 text-blue-300' 
+                : 'bg-blue-100 text-blue-700'
+            }`}>
               {activeTasks} active
             </span>
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">
+            <span className={`px-3 py-1 rounded-full transition-colors ${
+              darkMode 
+                ? 'bg-green-900 text-green-300' 
+                : 'bg-green-100 text-green-700'
+            }`}>
               {completedTasks} completed
             </span>
           </div>
@@ -41,9 +85,13 @@ function App() {
         <div className="flex flex-wrap gap-2 mb-6">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
               filter === 'all'
-                ? 'bg-blue-600 text-white'
+                ? darkMode
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-blue-600 text-white shadow-md'
+                : darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -51,9 +99,13 @@ function App() {
           </button>
           <button
             onClick={() => setFilter('today')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
               filter === 'today'
-                ? 'bg-blue-600 text-white'
+                ? darkMode
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-blue-600 text-white shadow-md'
+                : darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -61,19 +113,27 @@ function App() {
           </button>
           <button
             onClick={() => setFilter('week')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
               filter === 'week'
-                ? 'bg-blue-600 text-white'
+                ? darkMode
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-blue-600 text-white shadow-md'
+                : darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
-            📅 This Week
+            📅 Week
           </button>
           <button
             onClick={() => setFilter('inbox')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
               filter === 'inbox'
-                ? 'bg-blue-600 text-white'
+                ? darkMode
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-blue-600 text-white shadow-md'
+                : darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -81,9 +141,13 @@ function App() {
           </button>
           <button
             onClick={() => setFilter('someday')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
               filter === 'someday'
-                ? 'bg-blue-600 text-white'
+                ? darkMode
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-blue-600 text-white shadow-md'
+                : darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -91,7 +155,11 @@ function App() {
           </button>
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="ml-auto px-4 py-2 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            className={`ml-auto px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+              darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
           >
             {showCompleted ? '👁️ Hide' : '👁️ Show'} Completed
           </button>
@@ -99,13 +167,15 @@ function App() {
 
         {/* Add Task */}
         <div className="mb-6">
-          <AddTask onAdd={addTask} />
+          <AddTask onAdd={addTask} darkMode={darkMode} />
         </div>
 
         {/* Task List */}
         <div className="space-y-3">
           {filteredTasks.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className={`text-center py-12 rounded-lg transition-colors ${
+              darkMode ? 'bg-gray-800 text-gray-400' : 'bg-white/50 text-gray-500'
+            }`}>
               <p className="text-lg">🎉 No tasks here!</p>
               <p className="text-sm mt-2">
                 {filter === 'all'
@@ -121,6 +191,7 @@ function App() {
                 onToggle={toggleComplete}
                 onDelete={deleteTask}
                 onUpdate={updateTask}
+                darkMode={darkMode}
               />
             ))
           )}

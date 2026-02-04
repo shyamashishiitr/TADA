@@ -1,10 +1,11 @@
-import { Task } from '../types';
+import type { Task } from '../types';
 
 interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Task>) => void;
+  darkMode?: boolean;
 }
 
 const priorityColors = {
@@ -13,43 +14,77 @@ const priorityColors = {
   low: 'border-l-green-500',
 };
 
-export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
+export const TaskItem = ({ task, onToggle, onDelete, darkMode = false }: TaskItemProps) => {
   return (
     <div
-      className={`bg-white p-4 rounded-lg shadow-sm border-l-4 ${
+      className={`p-4 rounded-lg shadow-sm border-l-4 transition-all duration-300 hover:shadow-md ${
         priorityColors[task.priority]
-      } ${task.completed ? 'opacity-60' : ''}`}
+      } ${
+        task.completed 
+          ? darkMode
+            ? 'opacity-50 bg-gray-800' 
+            : 'opacity-60 bg-white'
+          : darkMode
+            ? 'bg-gray-800'
+            : 'bg-white'
+      } ${
+        task.completed ? 'animate-[fadeIn_0.3s_ease-in]' : ''
+      }`}
     >
       <div className="flex items-start gap-3">
         <input
           type="checkbox"
           checked={task.completed}
           onChange={() => onToggle(task.id)}
-          className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className={`mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-transform hover:scale-110 ${
+            task.completed ? 'animate-[checkBounce_0.3s_ease-in-out]' : ''
+          }`}
         />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h3
-            className={`font-medium ${
-              task.completed ? 'line-through text-gray-500' : 'text-gray-900'
+            className={`font-medium transition-all duration-300 ${
+              task.completed 
+                ? darkMode
+                  ? 'line-through text-gray-500'
+                  : 'line-through text-gray-500'
+                : darkMode
+                  ? 'text-gray-100'
+                  : 'text-gray-900'
             }`}
           >
             {task.title}
           </h3>
           {task.description && (
-            <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+            <p className={`text-sm mt-1 transition-colors ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              {task.description}
+            </p>
           )}
-          <div className="flex gap-2 mt-2">
-            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+          <div className="flex gap-2 mt-2 flex-wrap">
+            <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
+              darkMode 
+                ? 'bg-gray-700 text-gray-300' 
+                : 'bg-gray-100 text-gray-600'
+            }`}>
               {task.category}
             </span>
-            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+            <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
+              darkMode 
+                ? 'bg-gray-700 text-gray-300' 
+                : 'bg-gray-100 text-gray-600'
+            }`}>
               {task.priority}
             </span>
           </div>
         </div>
         <button
           onClick={() => onDelete(task.id)}
-          className="text-gray-400 hover:text-red-600 transition-colors"
+          className={`transition-all hover:scale-110 ${
+            darkMode 
+              ? 'text-gray-500 hover:text-red-400' 
+              : 'text-gray-400 hover:text-red-600'
+          }`}
           aria-label="Delete task"
         >
           <svg

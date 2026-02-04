@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Task, TaskPriority, TaskCategory } from '../types';
+import type { Task, TaskPriority, TaskCategory } from '../types';
 
 const STORAGE_KEY = 'tada-tasks';
 
