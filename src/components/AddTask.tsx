@@ -1,16 +1,27 @@
-import { useState } from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import type { TaskCategory, TaskPriority } from '../types';
 
 interface AddTaskProps {
   onAdd: (title: string, category: TaskCategory, priority: TaskPriority) => void;
   darkMode?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-export const AddTask = ({ onAdd, darkMode = false }: AddTaskProps) => {
+export const AddTask = forwardRef<{ focusInput: () => void }, AddTaskProps>(
+  ({ onAdd, darkMode = false, onFocus, onBlur }, ref) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('inbox');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusInput: () => {
+      setIsOpen(true);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,10 +56,13 @@ export const AddTask = ({ onAdd, darkMode = false }: AddTaskProps) => {
       }`}
     >
       <input
+        ref={inputRef}
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="What needs to be done?"
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder="What needs to be done? (Cmd/Ctrl+K)"
         className={`w-full px-3 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
           darkMode
             ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
@@ -106,4 +120,4 @@ export const AddTask = ({ onAdd, darkMode = false }: AddTaskProps) => {
       </div>
     </form>
   );
-};
+});

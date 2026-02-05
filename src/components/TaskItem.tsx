@@ -6,6 +6,7 @@ interface TaskItemProps {
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   darkMode?: boolean;
+  isSelected?: boolean;
 }
 
 const priorityColors = {
@@ -14,7 +15,7 @@ const priorityColors = {
   low: 'border-l-green-500',
 };
 
-export const TaskItem = ({ task, onToggle, onDelete, darkMode = false }: TaskItemProps) => {
+export const TaskItem = ({ task, onToggle, onDelete, darkMode = false, isSelected = false }: TaskItemProps) => {
   return (
     <div
       className={`p-4 rounded-lg shadow-sm border-l-4 transition-all duration-300 hover:shadow-md ${
@@ -29,6 +30,8 @@ export const TaskItem = ({ task, onToggle, onDelete, darkMode = false }: TaskIte
             : 'bg-white'
       } ${
         task.completed ? 'animate-[fadeIn_0.3s_ease-in]' : ''
+      } ${
+        isSelected ? (darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-600') : ''
       }`}
     >
       <div className="flex items-start gap-3">

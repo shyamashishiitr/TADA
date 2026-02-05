@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTasks } from './hooks/useTasks';
 import { TaskItem } from './components/TaskItem';
 import { AddTask } from './components/AddTask';
+import { ShortcutsModal } from './components/ShortcutsModal';
 import type { TaskCategory } from './types';
 
 function App() {
@@ -12,6 +13,10 @@ function App() {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
   });
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [quickAddFocused, setQuickAddFocused] = useState(false);
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
+  const addTaskRef = useRef<{ focusInput: () => void }>(null);
 
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode.toString());
@@ -27,6 +32,53 @@ function App() {
     if (filter === 'all') return true;
     return task.category === filter;
   });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+K for quick add
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        addTaskRef.current?.focusInput();
+        setQuickAddFocused(true);
+      }
+      
+      // ? for shortcuts help
+      if (e.key === '?' && !quickAddFocused) {
+        e.preventDefault();
+        setShowShortcuts(true);
+      }
+      
+      // Escape to close modals or unfocus
+      if (e.key === 'Escape') {
+        setShowShortcuts(false);
+        setQuickAddFocused(false);
+      }
+
+      // Arrow keys for navigation (when not in input)
+      if (!quickAddFocused && !showShortcuts) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setSelectedTaskIndex((prev) => 
+            Math.min(prev + 1, filteredTasks.length - 1)
+          );
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setSelectedTaskIndex((prev) => Math.max(prev - 1, 0));
+        }
+        
+        // Enter to complete selected task
+        if (e.key === 'Enter' && filteredTasks[selectedTaskIndex]) {
+          e.preventDefault();
+          toggleComplete(filteredTasks[selectedTaskIndex].id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [quickAddFocused, showShortcuts, selectedTaskIndex, filteredTasks, toggleComplete]);
 
   const activeTasks = tasks.filter((t) => !t.completed).length;
   const completedTasks = tasks.filter((t) => t.completed).length;
@@ -46,17 +98,31 @@ function App() {
             }`}>
               TADA ✨
             </h1>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg transition-all hover:scale-110 ${
-                darkMode 
-                  ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowShortcuts(true)}
+                className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                  darkMode 
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts (?)"
+              >
+                ⌨️
+              </button>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                  darkMode 
+                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+            </div>
           </div>
           <p className={`transition-colors ${
             darkMode ? 'text-gray-400' : 'text-gray-600'
@@ -167,7 +233,13 @@ function App() {
 
         {/* Add Task */}
         <div className="mb-6">
-          <AddTask onAdd={addTask} darkMode={darkMode} />
+          <AddTask 
+            ref={addTaskRef}
+            onAdd={addTask} 
+            darkMode={darkMode}
+            onFocus={() => setQuickAddFocused(true)}
+            onBlur={() => setQuickAddFocused(false)}
+          />
         </div>
 
         {/* Task List */}
@@ -184,7 +256,7 @@ function App() {
               </p>
             </div>
           ) : (
-            filteredTasks.map((task) => (
+            filteredTasks.map((task, index) => (
               <TaskItem
                 key={task.id}
                 task={task}
@@ -192,10 +264,19 @@ function App() {
                 onDelete={deleteTask}
                 onUpdate={updateTask}
                 darkMode={darkMode}
+                isSelected={index === selectedTaskIndex}
               />
             ))
           )}
         </div>
+
+        {/* Shortcuts Modal */}
+        {showShortcuts && (
+          <ShortcutsModal 
+            onClose={() => setShowShortcuts(false)} 
+            darkMode={darkMode}
+          />
+        )}
       </div>
     </div>
   );
