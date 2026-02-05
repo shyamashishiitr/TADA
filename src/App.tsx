@@ -86,148 +86,172 @@ function App() {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       darkMode 
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
-        : 'bg-gradient-to-br from-blue-50 to-indigo-100'
+        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
+        : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'
     }`}>
-      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 py-6 sm:py-12 sm:px-6 lg:px-8">
         {/* Header */}
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className={`text-3xl sm:text-4xl font-bold transition-colors ${
-              darkMode ? 'text-white' : 'text-gray-900'
-            }`}>
-              TADA ✨
-            </h1>
-            <div className="flex gap-2">
+        <header className="mb-8 sm:mb-12">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className={`text-4xl sm:text-6xl font-black mb-2 transition-colors bg-gradient-to-r ${
+                darkMode 
+                  ? 'from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text' 
+                  : 'from-purple-600 via-pink-600 to-blue-600 text-transparent bg-clip-text'
+              }`}>
+                TADA
+              </h1>
+              <p className={`text-sm sm:text-base font-medium transition-colors ${
+                darkMode ? 'text-purple-300' : 'text-purple-700'
+              }`}>
+                Get Things Done, Beautifully ✨
+              </p>
+            </div>
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => setShowShortcuts(true)}
-                className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                className={`p-2.5 sm:p-3 rounded-xl transition-all hover:scale-105 shadow-md ${
                   darkMode 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-slate-800/80 backdrop-blur text-purple-300 hover:bg-slate-700/80 border border-purple-500/20' 
+                    : 'bg-white/90 backdrop-blur text-purple-600 hover:bg-white border border-purple-200'
                 }`}
                 aria-label="Keyboard shortcuts"
                 title="Keyboard shortcuts (?)"
               >
-                ⌨️
+                <span className="text-lg">⌨️</span>
               </button>
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                className={`p-2.5 sm:p-3 rounded-xl transition-all hover:scale-105 shadow-md ${
                   darkMode 
-                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-slate-800/80 backdrop-blur text-yellow-300 hover:bg-slate-700/80 border border-yellow-500/20' 
+                    : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
                 }`}
                 aria-label="Toggle dark mode"
               >
-                {darkMode ? '☀️' : '🌙'}
+                <span className="text-lg">{darkMode ? '☀️' : '🌙'}</span>
               </button>
             </div>
           </div>
-          <p className={`transition-colors ${
-            darkMode ? 'text-gray-400' : 'text-gray-600'
-          }`}>
-            Get Shit Done, Geshido Style
-          </p>
-          <div className="flex gap-4 mt-4 text-sm flex-wrap">
-            <span className={`px-3 py-1 rounded-full transition-colors ${
+          
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+            <div className={`p-4 sm:p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.02] ${
               darkMode 
-                ? 'bg-blue-900 text-blue-300' 
-                : 'bg-blue-100 text-blue-700'
+                ? 'bg-gradient-to-br from-blue-900/50 to-blue-800/30 backdrop-blur border border-blue-500/20' 
+                : 'bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200'
             }`}>
-              {activeTasks} active
-            </span>
-            <span className={`px-3 py-1 rounded-full transition-colors ${
+              <div className={`text-2xl sm:text-3xl font-bold mb-1 ${
+                darkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
+                {activeTasks}
+              </div>
+              <div className={`text-xs sm:text-sm font-medium ${
+                darkMode ? 'text-blue-400' : 'text-blue-600'
+              }`}>
+                Active Tasks
+              </div>
+            </div>
+            <div className={`p-4 sm:p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.02] ${
               darkMode 
-                ? 'bg-green-900 text-green-300' 
-                : 'bg-green-100 text-green-700'
+                ? 'bg-gradient-to-br from-green-900/50 to-green-800/30 backdrop-blur border border-green-500/20' 
+                : 'bg-gradient-to-br from-green-100 to-green-50 border border-green-200'
             }`}>
-              {completedTasks} completed
-            </span>
+              <div className={`text-2xl sm:text-3xl font-bold mb-1 ${
+                darkMode ? 'text-green-300' : 'text-green-700'
+              }`}>
+                {completedTasks}
+              </div>
+              <div className={`text-xs sm:text-sm font-medium ${
+                darkMode ? 'text-green-400' : 'text-green-600'
+              }`}>
+                Completed
+              </div>
+            </div>
           </div>
         </header>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
               filter === 'all'
                 ? darkMode
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-purple-500/50'
+                  : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-purple-500/30'
                 : darkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
             }`}
           >
-            All Tasks
+            All
           </button>
           <button
             onClick={() => setFilter('today')}
-            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
               filter === 'today'
                 ? darkMode
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-orange-500/50'
+                  : 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-orange-500/30'
                 : darkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
             }`}
           >
             🔥 Today
           </button>
           <button
             onClick={() => setFilter('week')}
-            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
               filter === 'week'
                 ? darkMode
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-blue-500/50'
+                  : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-blue-500/30'
                 : darkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
             }`}
           >
             📅 Week
           </button>
           <button
             onClick={() => setFilter('inbox')}
-            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
               filter === 'inbox'
                 ? darkMode
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-gray-500/50'
+                  : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-500/30'
                 : darkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
             }`}
           >
             📥 Inbox
           </button>
           <button
             onClick={() => setFilter('someday')}
-            className={`px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
               filter === 'someday'
                 ? darkMode
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
+                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-purple-500/30'
                 : darkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
             }`}
           >
             💭 Someday
           </button>
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className={`ml-auto px-3 py-2 sm:px-4 rounded-lg transition-all text-sm sm:text-base ${
+            className={`ml-auto px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
               darkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
+                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
             }`}
           >
-            {showCompleted ? '👁️ Hide' : '👁️ Show'} Completed
+            {showCompleted ? '👁️ Hide' : '👁️ Show'}
           </button>
         </div>
 
@@ -243,16 +267,23 @@ function App() {
         </div>
 
         {/* Task List */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {filteredTasks.length === 0 ? (
-            <div className={`text-center py-12 rounded-lg transition-colors ${
-              darkMode ? 'bg-gray-800 text-gray-400' : 'bg-white/50 text-gray-500'
+            <div className={`text-center py-16 sm:py-20 rounded-2xl transition-colors shadow-lg ${
+              darkMode ? 'bg-slate-800/50 backdrop-blur border border-slate-700' : 'bg-white/70 backdrop-blur border border-gray-200'
             }`}>
-              <p className="text-lg">🎉 No tasks here!</p>
-              <p className="text-sm mt-2">
+              <div className="text-6xl sm:text-7xl mb-4">🎉</div>
+              <p className={`text-xl sm:text-2xl font-semibold mb-2 ${
+                darkMode ? 'text-gray-200' : 'text-gray-800'
+              }`}>
+                All Clear!
+              </p>
+              <p className={`text-sm sm:text-base ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 {filter === 'all'
-                  ? 'Add your first task to get started.'
-                  : `No tasks in ${filter}.`}
+                  ? 'Add your first task to get started'
+                  : `No tasks in ${filter}`}
               </p>
             </div>
           ) : (

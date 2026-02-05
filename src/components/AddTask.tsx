@@ -37,13 +37,19 @@ export const AddTask = forwardRef<{ focusInput: () => void }, AddTaskProps>(
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className={`w-full p-4 rounded-lg shadow-sm border-2 border-dashed transition-all hover:scale-[1.01] ${
+        className={`w-full p-5 sm:p-6 rounded-2xl shadow-lg border-2 border-dashed transition-all hover:scale-[1.02] group ${
           darkMode
-            ? 'bg-gray-800 border-gray-600 hover:border-blue-500 text-gray-400 hover:text-blue-400'
-            : 'bg-white border-gray-300 hover:border-blue-500 text-gray-600 hover:text-blue-600'
+            ? 'bg-slate-800/80 backdrop-blur border-purple-500/30 hover:border-purple-500 text-purple-300 hover:text-purple-200'
+            : 'bg-white/90 backdrop-blur border-purple-200 hover:border-purple-400 text-purple-600 hover:text-purple-700'
         }`}
       >
-        + Add New Task
+        <span className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+          <span className="text-2xl group-hover:scale-110 transition-transform">+</span>
+          Add New Task
+        </span>
+        <span className={`text-xs sm:text-sm mt-2 block ${darkMode ? 'text-purple-400' : 'text-purple-500'}`}>
+          Press Cmd+K for quick add
+        </span>
       </button>
     );
   }
@@ -51,8 +57,8 @@ export const AddTask = forwardRef<{ focusInput: () => void }, AddTaskProps>(
   return (
     <form 
       onSubmit={handleSubmit} 
-      className={`p-4 rounded-lg shadow-sm animate-[slideDown_0.2s_ease-out] ${
-        darkMode ? 'bg-gray-800' : 'bg-white'
+      className={`p-5 sm:p-6 rounded-2xl shadow-lg animate-[slideDown_0.2s_ease-out] ${
+        darkMode ? 'bg-slate-800/80 backdrop-blur border border-slate-700' : 'bg-white/90 backdrop-blur border border-gray-200'
       }`}
     >
       <input
@@ -62,21 +68,21 @@ export const AddTask = forwardRef<{ focusInput: () => void }, AddTaskProps>(
         onChange={(e) => setTitle(e.target.value)}
         onFocus={onFocus}
         onBlur={onBlur}
-        placeholder="What needs to be done? (Cmd/Ctrl+K)"
-        className={`w-full px-3 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        placeholder="What needs to be done?"
+        className={`w-full px-4 py-3 sm:py-4 border-2 rounded-xl text-base sm:text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
           darkMode
-            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-            : 'bg-white border-gray-300 text-gray-900'
+            ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
+            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
         }`}
         autoFocus
       />
-      <div className="flex gap-2 mt-3 flex-wrap">
+      <div className="flex gap-3 mt-4 flex-wrap">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as TaskCategory)}
-          className={`flex-1 min-w-[120px] px-3 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`flex-1 min-w-[140px] px-4 py-3 border-2 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium ${
             darkMode
-              ? 'bg-gray-700 border-gray-600 text-white'
+              ? 'bg-slate-700 border-slate-600 text-white'
               : 'bg-white border-gray-300 text-gray-900'
           }`}
         >
@@ -88,9 +94,9 @@ export const AddTask = forwardRef<{ focusInput: () => void }, AddTaskProps>(
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value as TaskPriority)}
-          className={`flex-1 min-w-[120px] px-3 py-2 border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`flex-1 min-w-[140px] px-4 py-3 border-2 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium ${
             darkMode
-              ? 'bg-gray-700 border-gray-600 text-white'
+              ? 'bg-slate-700 border-slate-600 text-white'
               : 'bg-white border-gray-300 text-gray-900'
           }`}
         >
@@ -99,19 +105,19 @@ export const AddTask = forwardRef<{ focusInput: () => void }, AddTaskProps>(
           <option value="low">🟢 Low</option>
         </select>
       </div>
-      <div className="flex gap-2 mt-3">
+      <div className="flex gap-3 mt-4">
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all hover:scale-105"
+          className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-105 shadow-lg"
         >
           Add Task
         </button>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className={`px-4 py-2 rounded-md transition-all hover:scale-105 ${
+          className={`px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
             darkMode
-              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
