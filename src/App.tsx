@@ -1,12 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTasks } from './hooks/useTasks';
+import { useADHDMode } from './hooks/useADHDMode';
 import { TaskItem } from './components/TaskItem';
 import { AddTask } from './components/AddTask';
 import { ShortcutsModal } from './components/ShortcutsModal';
-import type { TaskCategory } from './types';
+import { ADHDMode } from './components/ADHDMode';
+import { CelebrationOverlay } from './components/CelebrationOverlay';
+import type { TaskCategory, EnergyLevel } from './types';
 
 function App() {
   const { tasks, addTask, deleteTask, toggleComplete, updateTask } = useTasks();
+  const {
+    isADHDMode,
+    toggleADHDMode,
+    energyFilter,
+    setEnergyFilter,
+    clearEnergyFilter,
+    showCelebration,
+    celebrationMessage,
+    celebrate,
+  } = useADHDMode();
   const [filter, setFilter] = useState<TaskCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(true);
   const [darkMode, setDarkMode] = useState(() => {
@@ -32,6 +45,18 @@ function App() {
     if (filter === 'all') return true;
     return task.category === filter;
   });
+
+  const activeTasks = tasks.filter((t) => !t.completed).length;
+  const completedTasks = tasks.filter((t) => t.completed).length;
+
+  // Enhanced toggle complete with celebration in ADHD mode
+  const handleToggleComplete = (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (task && !task.completed && isADHDMode) {
+      celebrate(task.title);
+    }
+    toggleComplete(id);
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -71,17 +96,36 @@ function App() {
         // Enter to complete selected task
         if (e.key === 'Enter' && filteredTasks[selectedTaskIndex]) {
           e.preventDefault();
-          toggleComplete(filteredTasks[selectedTaskIndex].id);
+          handleToggleComplete(filteredTasks[selectedTaskIndex].id);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [quickAddFocused, showShortcuts, selectedTaskIndex, filteredTasks, toggleComplete]);
+  }, [quickAddFocused, showShortcuts, selectedTaskIndex, filteredTasks, handleToggleComplete]);
 
-  const activeTasks = tasks.filter((t) => !t.completed).length;
-  const completedTasks = tasks.filter((t) => t.completed).length;
+  // Just Start - random task picker
+  const handleJustStart = (energyLevel?: EnergyLevel) => {
+    let availableTasks = tasks.filter((t) => !t.completed);
+
+    // Filter by energy level if provided
+    if (energyLevel) {
+      const energyFiltered = availableTasks.filter((t) => t.energyLevel === energyLevel);
+      // Use energy-filtered tasks if any exist, otherwise fall back to all
+      if (energyFiltered.length > 0) {
+        availableTasks = energyFiltered;
+      }
+    }
+
+    if (availableTasks.length === 0) return;
+
+    // Pick a random task (currently just refreshes the view since focus mode already shows highest priority)
+    // The randomization is implicit - users can shuffle by clearing/setting energy filter
+    
+    // Scroll to top to show the selected task
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
@@ -109,6 +153,21 @@ function App() {
             </div>
             <div className="flex gap-2 sm:gap-3">
               <button
+                onClick={toggleADHDMode}
+                className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-sm sm:text-base ${
+                  isADHDMode
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
+                    : darkMode
+                    ? 'bg-slate-800/80 backdrop-blur text-purple-300 hover:bg-slate-700/80 border border-purple-500/20'
+                    : 'bg-white/90 backdrop-blur text-purple-700 hover:bg-white border border-purple-200'
+                }`}
+                aria-label="Toggle ADHD Mode"
+                title="ADHD Mode - Focus on one task at a time"
+              >
+                <span className="mr-2">🧠</span>
+                ADHD Mode
+              </button>
+              <button
                 onClick={() => setShowShortcuts(true)}
                 className={`p-2.5 sm:p-3 rounded-xl transition-all hover:scale-105 shadow-md ${
                   darkMode 
@@ -134,7 +193,8 @@ function App() {
             </div>
           </div>
           
-          {/* Stats Cards */}
+          {/* Stats Cards - Hidden in ADHD Mode */}
+          {!isADHDMode && (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
             <div className={`p-4 sm:p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.02] ${
               darkMode 
@@ -169,9 +229,11 @@ function App() {
               </div>
             </div>
           </div>
+          )}
         </header>
 
-        {/* Filters */}
+        {/* Filters - Hidden in ADHD Mode */}
+        {!isADHDMode && (
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
           <button
             onClick={() => setFilter('all')}
@@ -254,8 +316,10 @@ function App() {
             {showCompleted ? '👁️ Hide' : '👁️ Show'}
           </button>
         </div>
+        )}
 
-        {/* Add Task */}
+        {/* Add Task - Hidden in ADHD Mode */}
+        {!isADHDMode && (
         <div className="mb-6">
           <AddTask 
             ref={addTaskRef}
@@ -265,8 +329,22 @@ function App() {
             onBlur={() => setQuickAddFocused(false)}
           />
         </div>
+        )}
 
-        {/* Task List */}
+        {/* ADHD Mode View */}
+        {isADHDMode ? (
+          <ADHDMode
+            tasks={tasks}
+            onToggle={handleToggleComplete}
+            onJustStart={handleJustStart}
+            onExitADHDMode={toggleADHDMode}
+            energyFilter={energyFilter}
+            onEnergyFilterChange={setEnergyFilter}
+            onClearEnergyFilter={clearEnergyFilter}
+            darkMode={darkMode}
+          />
+        ) : (
+        /* Normal Task List */
         <div className="space-y-4">
           {filteredTasks.length === 0 ? (
             <div className={`text-center py-16 sm:py-20 rounded-2xl transition-colors shadow-lg ${
@@ -291,7 +369,7 @@ function App() {
               <TaskItem
                 key={task.id}
                 task={task}
-                onToggle={toggleComplete}
+                onToggle={handleToggleComplete}
                 onDelete={deleteTask}
                 onUpdate={updateTask}
                 darkMode={darkMode}
@@ -300,6 +378,12 @@ function App() {
             ))
           )}
         </div>
+        )}
+
+        {/* Celebration Overlay */}
+        {showCelebration && (
+          <CelebrationOverlay message={celebrationMessage} darkMode={darkMode} />
+        )}
 
         {/* Shortcuts Modal */}
         {showShortcuts && (

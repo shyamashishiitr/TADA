@@ -1,5 +1,6 @@
 export type TaskPriority = 'high' | 'medium' | 'low';
 export type TaskCategory = 'inbox' | 'today' | 'week' | 'someday';
+export type EnergyLevel = 'high' | 'medium' | 'low';
 
 export interface SubTask {
   id: string;
@@ -19,4 +20,5 @@ export interface Task {
   dueDate?: string; // ISO date string (YYYY-MM-DD)
   subtasks?: SubTask[];
   estimatedMinutes?: number; // time estimate for ADHD mode
+  energyLevel?: EnergyLevel; // energy level required for task
 }
