@@ -8,6 +8,10 @@ import { AddTask } from './components/AddTask';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { ADHDMode } from './components/ADHDMode';
 import { CelebrationOverlay } from './components/CelebrationOverlay';
+import { BottomNav } from './components/BottomNav';
+import { MobileAddTask } from './components/MobileAddTask';
+import { InstallPrompt } from './components/InstallPrompt';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import type { TaskCategory, EnergyLevel } from './types';
 
 function App() {
@@ -516,7 +520,30 @@ function App() {
             darkMode={darkMode}
           />
         )}
+
+        {/* Mobile Bottom Navigation (hidden on desktop) */}
+        <BottomNav
+          filter={filter}
+          onFilterChange={setFilter}
+          isADHDMode={isADHDMode}
+          onToggleADHDMode={toggleADHDMode}
+          darkMode={darkMode}
+        />
+
+        {/* Mobile Add Task (hidden on desktop and in ADHD mode) */}
+        {!isADHDMode && (
+          <MobileAddTask
+            onAdd={addTask}
+            darkMode={darkMode}
+          />
+        )}
+
+        {/* Install Prompt */}
+        <InstallPrompt darkMode={darkMode} />
       </div>
+
+      {/* Offline Indicator */}
+      <OfflineIndicator darkMode={darkMode} />
     </div>
   );
 }
