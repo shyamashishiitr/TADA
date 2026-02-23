@@ -1,4 +1,5 @@
-import type { Task } from '../types';
+import { useState } from 'react';
+import type { Task, TaskCategory, TaskPriority } from '../types';
 
 interface TaskItemProps {
   task: Task;
@@ -15,10 +16,128 @@ const priorityColors = {
   low: 'border-l-green-500',
 };
 
-export const TaskItem = ({ task, onToggle, onDelete, darkMode = false, isSelected = false }: TaskItemProps) => {
+const categoryEmojis: Record<TaskCategory, string> = {
+  inbox: '📥',
+  today: '🔥',
+  week: '📅',
+  someday: '💭',
+};
+
+const priorityLabels: Record<TaskPriority, { emoji: string; label: string }> = {
+  high: { emoji: '🔴', label: 'High' },
+  medium: { emoji: '🟡', label: 'Medium' },
+  low: { emoji: '🟢', label: 'Low' },
+};
+
+export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false, isSelected = false }: TaskItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editCategory, setEditCategory] = useState(task.category);
+  const [editPriority, setEditPriority] = useState(task.priority);
+  const [editDueDate, setEditDueDate] = useState(task.dueDate || '');
+
+  const handleSave = () => {
+    if (!editTitle.trim()) return;
+    onUpdate(task.id, {
+      title: editTitle.trim(),
+      category: editCategory,
+      priority: editPriority,
+      dueDate: editDueDate || undefined,
+    });
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setEditTitle(task.title);
+      setEditCategory(task.category);
+      setEditPriority(task.priority);
+      setEditDueDate(task.dueDate || '');
+      setIsEditing(false);
+    }
+  };
+
+  const isOverdue = task.dueDate && !task.completed && new Date(task.dueDate) < new Date(new Date().toDateString());
+  const isDueToday = task.dueDate && new Date(task.dueDate).toDateString() === new Date().toDateString();
+
+  if (isEditing) {
+    return (
+      <div className={`p-5 sm:p-6 rounded-2xl border-l-4 shadow-lg transition-all ${priorityColors[editPriority]} ${
+        darkMode ? 'bg-slate-800/80 backdrop-blur border-slate-700/50' : 'bg-white/90 backdrop-blur border-gray-100'
+      }`}>
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className={`w-full px-3 py-2 border-2 rounded-xl text-base font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 mb-3 ${
+            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+          }`}
+          autoFocus
+        />
+        <div className="flex gap-2 flex-wrap mb-3">
+          <select
+            value={editCategory}
+            onChange={(e) => setEditCategory(e.target.value as TaskCategory)}
+            className={`px-3 py-2 border-2 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          >
+            <option value="inbox">📥 Inbox</option>
+            <option value="today">🔥 Today</option>
+            <option value="week">📅 Week</option>
+            <option value="someday">💭 Someday</option>
+          </select>
+          <select
+            value={editPriority}
+            onChange={(e) => setEditPriority(e.target.value as TaskPriority)}
+            className={`px-3 py-2 border-2 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          >
+            <option value="high">🔴 High</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
+          <input
+            type="date"
+            value={editDueDate}
+            onChange={(e) => setEditDueDate(e.target.value)}
+            className={`px-3 py-2 border-2 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium text-sm hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-105"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => {
+              setEditTitle(task.title);
+              setIsEditing(false);
+            }}
+            className={`px-4 py-2 rounded-xl font-medium text-sm transition-all hover:scale-105 ${
+              darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`p-5 sm:p-6 rounded-2xl border-l-4 transition-all duration-300 hover:scale-[1.01] shadow-lg ${
+      className={`p-5 sm:p-6 rounded-2xl border-l-4 transition-all duration-300 hover:scale-[1.01] shadow-lg cursor-pointer ${
         priorityColors[task.priority]
       } ${
         task.completed 
@@ -29,10 +148,9 @@ export const TaskItem = ({ task, onToggle, onDelete, darkMode = false, isSelecte
             ? 'bg-slate-800/80 backdrop-blur border-slate-700/50'
             : 'bg-white/90 backdrop-blur border-gray-100'
       } ${
-        task.completed ? 'animate-[fadeIn_0.3s_ease-in]' : ''
-      } ${
         isSelected ? (darkMode ? 'ring-2 ring-purple-500 shadow-purple-500/50' : 'ring-2 ring-purple-600 shadow-purple-600/30') : ''
       }`}
+      onDoubleClick={() => !task.completed && setIsEditing(true)}
     >
       <div className="flex items-start gap-4">
         <input
@@ -43,8 +161,6 @@ export const TaskItem = ({ task, onToggle, onDelete, darkMode = false, isSelecte
             darkMode 
               ? 'border-purple-500 text-purple-600 focus:ring-purple-500' 
               : 'border-purple-400 text-purple-600 focus:ring-purple-500'
-          } ${
-            task.completed ? 'animate-[checkBounce_0.3s_ease-in-out]' : ''
           }`}
         />
         <div className="flex-1 min-w-0">
@@ -68,25 +184,44 @@ export const TaskItem = ({ task, onToggle, onDelete, darkMode = false, isSelecte
               {task.description}
             </p>
           )}
-          <div className="flex gap-2 mt-3 flex-wrap">
+          <div className="flex gap-2 mt-3 flex-wrap items-center">
             <span className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
               darkMode 
                 ? 'bg-slate-700/50 text-purple-300 border border-slate-600' 
                 : 'bg-purple-50 text-purple-700 border border-purple-200'
             }`}>
-              {task.category}
+              {categoryEmojis[task.category]} {task.category}
             </span>
             <span className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
               task.priority === 'high' ? (darkMode ? 'bg-red-900/30 text-red-300 border border-red-700' : 'bg-red-50 text-red-700 border border-red-200') :
               task.priority === 'medium' ? (darkMode ? 'bg-yellow-900/30 text-yellow-300 border border-yellow-700' : 'bg-yellow-50 text-yellow-700 border border-yellow-200') :
               (darkMode ? 'bg-green-900/30 text-green-300 border border-green-700' : 'bg-green-50 text-green-700 border border-green-200')
             }`}>
-              {task.priority === 'high' ? '🔴 High' : task.priority === 'medium' ? '🟡 Medium' : '🟢 Low'}
+              {priorityLabels[task.priority].emoji} {priorityLabels[task.priority].label}
             </span>
+            {task.dueDate && (
+              <span className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                isOverdue
+                  ? (darkMode ? 'bg-red-900/50 text-red-300 border border-red-600 animate-pulse' : 'bg-red-100 text-red-700 border border-red-300 animate-pulse')
+                  : isDueToday
+                  ? (darkMode ? 'bg-orange-900/30 text-orange-300 border border-orange-700' : 'bg-orange-50 text-orange-700 border border-orange-200')
+                  : (darkMode ? 'bg-slate-700/50 text-gray-300 border border-slate-600' : 'bg-gray-50 text-gray-700 border border-gray-200')
+              }`}>
+                📆 {isOverdue ? 'Overdue: ' : isDueToday ? 'Today' : ''}{!isDueToday ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+              </span>
+            )}
           </div>
+          {!task.completed && (
+            <p className={`text-xs mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              Double-click to edit
+            </p>
+          )}
         </div>
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(task.id);
+          }}
           className={`p-2 rounded-lg transition-all hover:scale-110 ${
             darkMode 
               ? 'text-gray-500 hover:text-red-400 hover:bg-red-900/20' 
