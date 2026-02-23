@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Mobile-first base styles */
+* {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html {
+  /* Respect iOS safe areas */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+body {
+  /* Prevent overscroll bounce on mobile */
+  overscroll-behavior-y: contain;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+}
+
+/* Touch-friendly scroll */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -28,5 +52,47 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pullRefresh {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Mobile spacing utilities */
+@media (max-width: 767px) {
+  /* Add bottom padding to main content to prevent bottom nav overlap */
+  .mobile-content-padding {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  /* Ensure minimum touch target size */
+  button, a, input[type="checkbox"], input[type="radio"], select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* PWA display mode detection */
+@media (display-mode: standalone) {
+  /* Hide install prompt when already installed */
+  .install-prompt {
+    display: none;
   }
 }

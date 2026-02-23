@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import type { Task, TaskCategory, TaskPriority } from '../types';
+import type { Task, TaskCategory, TaskPriority, SubTask } from '../types';
+import { MakeItTiny } from './MakeItTiny';
+import { SubtaskList } from './SubtaskList';
+import { TimeEstimate } from './TimeEstimate';
 
 interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Task>) => void;
+  onToggleSubtask?: (taskId: string, subtaskId: string) => void;
+  onAddSubtask?: (taskId: string, title: string) => void;
+  onDeleteSubtask?: (taskId: string, subtaskId: string) => void;
+  onSetSubtasks?: (taskId: string, subtasks: SubTask[]) => void;
   darkMode?: boolean;
   isSelected?: boolean;
 }
@@ -29,7 +36,18 @@ const priorityLabels: Record<TaskPriority, { emoji: string; label: string }> = {
   low: { emoji: '🟢', label: 'Low' },
 };
 
-export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false, isSelected = false }: TaskItemProps) => {
+export const TaskItem = ({ 
+  task, 
+  onToggle, 
+  onDelete, 
+  onUpdate, 
+  onToggleSubtask,
+  onAddSubtask,
+  onDeleteSubtask,
+  onSetSubtasks,
+  darkMode = false, 
+  isSelected = false 
+}: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editCategory, setEditCategory] = useState(task.category);
@@ -59,6 +77,16 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
       setEditDueDate(task.dueDate || '');
       setIsEditing(false);
     }
+  };
+
+  const handleGenerateSubtasks = (subtasks: SubTask[]) => {
+    if (onSetSubtasks) {
+      onSetSubtasks(task.id, subtasks);
+    }
+  };
+
+  const handleSetEstimate = (minutes: number) => {
+    onUpdate(task.id, { estimatedMinutes: minutes });
   };
 
   const isOverdue = task.dueDate && !task.completed && new Date(task.dueDate) < new Date(new Date().toDateString());
@@ -137,7 +165,7 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
 
   return (
     <div
-      className={`p-5 sm:p-6 rounded-2xl border-l-4 transition-all duration-300 hover:scale-[1.01] shadow-lg cursor-pointer ${
+      className={`p-5 sm:p-6 rounded-2xl border-l-4 transition-all duration-300 hover:scale-[1.01] shadow-lg ${
         priorityColors[task.priority]
       } ${
         task.completed 
@@ -150,7 +178,6 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
       } ${
         isSelected ? (darkMode ? 'ring-2 ring-purple-500 shadow-purple-500/50' : 'ring-2 ring-purple-600 shadow-purple-600/30') : ''
       }`}
-      onDoubleClick={() => !task.completed && setIsEditing(true)}
     >
       <div className="flex items-start gap-4">
         <input
@@ -165,7 +192,7 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
         />
         <div className="flex-1 min-w-0">
           <h3
-            className={`font-semibold text-base sm:text-lg transition-all duration-300 ${
+            className={`font-semibold text-base sm:text-lg transition-all duration-300 cursor-pointer ${
               task.completed 
                 ? darkMode
                   ? 'line-through text-gray-500'
@@ -174,9 +201,11 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
                   ? 'text-gray-100'
                   : 'text-gray-900'
             }`}
+            onDoubleClick={() => !task.completed && setIsEditing(true)}
           >
             {task.title}
           </h3>
+          
           {task.description && (
             <p className={`text-sm sm:text-base mt-2 transition-colors ${
               darkMode ? 'text-gray-400' : 'text-gray-600'
@@ -184,6 +213,7 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
               {task.description}
             </p>
           )}
+          
           <div className="flex gap-2 mt-3 flex-wrap items-center">
             <span className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
               darkMode 
@@ -210,10 +240,57 @@ export const TaskItem = ({ task, onToggle, onDelete, onUpdate, darkMode = false,
                 📆 {isOverdue ? 'Overdue: ' : isDueToday ? 'Today' : ''}{!isDueToday ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
               </span>
             )}
+            {task.energyLevel && (
+              <span className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                task.energyLevel === 'high' ? (darkMode ? 'bg-green-900/30 text-green-300 border border-green-700' : 'bg-green-50 text-green-700 border border-green-200') :
+                task.energyLevel === 'medium' ? (darkMode ? 'bg-yellow-900/30 text-yellow-300 border border-yellow-700' : 'bg-yellow-50 text-yellow-700 border border-yellow-200') :
+                (darkMode ? 'bg-blue-900/30 text-blue-300 border border-blue-700' : 'bg-blue-50 text-blue-700 border border-blue-200')
+              }`}>
+                {task.energyLevel === 'high' && '🔋'}
+                {task.energyLevel === 'medium' && '⚡'}
+                {task.energyLevel === 'low' && '🪫'}
+                {' '}{task.energyLevel}
+              </span>
+            )}
           </div>
+
+          {/* Subtasks */}
+          {task.subtasks && task.subtasks.length > 0 && onToggleSubtask && (
+            <div className="mt-4">
+              <SubtaskList
+                subtasks={task.subtasks}
+                onToggle={(subtaskId) => onToggleSubtask(task.id, subtaskId)}
+                onAdd={onAddSubtask ? (title) => onAddSubtask(task.id, title) : undefined}
+                onDelete={onDeleteSubtask ? (subtaskId) => onDeleteSubtask(task.id, subtaskId) : undefined}
+                darkMode={darkMode}
+              />
+            </div>
+          )}
+
+          {/* Action buttons */}
           {!task.completed && (
-            <p className={`text-xs mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-              Double-click to edit
+            <div className="flex gap-2 mt-4 flex-wrap">
+              {!task.subtasks || task.subtasks.length === 0 ? (
+                <MakeItTiny
+                  taskTitle={task.title}
+                  onGenerate={handleGenerateSubtasks}
+                  darkMode={darkMode}
+                />
+              ) : null}
+              
+              <TimeEstimate
+                estimatedMinutes={task.estimatedMinutes}
+                actualMinutes={task.actualMinutes}
+                onSetEstimate={handleSetEstimate}
+                darkMode={darkMode}
+                compact
+              />
+            </div>
+          )}
+
+          {!task.completed && (
+            <p className={`text-xs mt-3 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              Double-click title to edit
             </p>
           )}
         </div>

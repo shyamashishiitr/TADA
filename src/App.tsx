@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTasks } from './hooks/useTasks';
 import { useADHDMode } from './hooks/useADHDMode';
+import { useFocusTimer } from './hooks/useFocusTimer';
+import { useDailyStats } from './hooks/useDailyStats';
 import { TaskItem } from './components/TaskItem';
 import { AddTask } from './components/AddTask';
 import { ShortcutsModal } from './components/ShortcutsModal';
@@ -9,7 +11,20 @@ import { CelebrationOverlay } from './components/CelebrationOverlay';
 import type { TaskCategory, EnergyLevel } from './types';
 
 function App() {
-  const { tasks, addTask, deleteTask, toggleComplete, updateTask } = useTasks();
+  const { 
+    tasks, 
+    addTask, 
+    deleteTask, 
+    toggleComplete, 
+    updateTask,
+    addSubtask,
+    setSubtasks,
+    toggleSubtask,
+    deleteSubtask,
+    startTaskTimer,
+    stopTaskTimer,
+  } = useTasks();
+  
   const {
     isADHDMode,
     toggleADHDMode,
@@ -18,8 +33,32 @@ function App() {
     clearEnergyFilter,
     showCelebration,
     celebrationMessage,
+    celebrationType,
     celebrate,
   } = useADHDMode();
+
+  const {
+    timer,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    stopTimer,
+    extendTimer,
+    setDuration,
+    remainingSeconds,
+    isTimeUp,
+    progress,
+  } = useFocusTimer();
+
+  const {
+    todayStats,
+    streak,
+    recordTaskCompletion,
+    recordSubtaskCompletion,
+    addFocusedTime,
+    getAverageAccuracy,
+  } = useDailyStats();
+
   const [filter, setFilter] = useState<TaskCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(true);
   const [darkMode, setDarkMode] = useState(() => {
@@ -49,13 +88,75 @@ function App() {
   const activeTasks = tasks.filter((t) => !t.completed).length;
   const completedTasks = tasks.filter((t) => t.completed).length;
 
-  // Enhanced toggle complete with celebration in ADHD mode
+  // Check if all tasks are done for big celebration
+  const checkForBigWin = () => {
+    const todayTasks = tasks.filter((t) => 
+      t.category === 'today' && !t.completed
+    );
+    if (todayTasks.length === 0 && tasks.filter((t) => t.category === 'today').length > 0) {
+      celebrate('All daily tasks complete!', 'bigwin');
+    }
+  };
+
+  // Check for streak milestones
+  const checkStreakMilestone = () => {
+    if (streak.currentStreak === 3 || streak.currentStreak === 7 || 
+        streak.currentStreak === 30 || streak.currentStreak === 100) {
+      celebrate(`${streak.currentStreak} day streak!`, 'streak');
+    }
+  };
+
+  // Enhanced toggle complete with celebrations and stats
   const handleToggleComplete = (id: string) => {
     const task = tasks.find((t) => t.id === id);
-    if (task && !task.completed && isADHDMode) {
-      celebrate(task.title);
+    if (task && !task.completed) {
+      // Stop timer if running for this task
+      if (timer.taskId === id && timer.isRunning) {
+        const minutesSpent = stopTaskTimer(id);
+        stopTimer();
+        addFocusedTime(minutesSpent);
+      }
+
+      // Record completion with stats
+      recordTaskCompletion(task.estimatedMinutes, task.actualMinutes);
+
+      // Celebrate
+      if (isADHDMode) {
+        celebrate(task.title, 'task');
+        setTimeout(checkForBigWin, 100);
+        setTimeout(checkStreakMilestone, 100);
+      }
     }
     toggleComplete(id);
+  };
+
+  // Handle subtask toggle with celebration
+  const handleToggleSubtask = (taskId: string, subtaskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    const subtask = task?.subtasks?.find((st) => st.id === subtaskId);
+    
+    if (subtask && !subtask.completed) {
+      recordSubtaskCompletion();
+      if (isADHDMode) {
+        celebrate(subtask.title, 'subtask');
+      }
+    }
+    
+    toggleSubtask(taskId, subtaskId);
+  };
+
+  // Timer handlers
+  const handleStartTimer = (taskId: string, duration: number) => {
+    startTaskTimer(taskId);
+    startTimer(taskId, duration);
+  };
+
+  const handleStopTimer = () => {
+    if (timer.taskId) {
+      const minutesSpent = stopTaskTimer(timer.taskId);
+      addFocusedTime(minutesSpent);
+    }
+    stopTimer();
   };
 
   // Keyboard shortcuts
@@ -103,7 +204,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [quickAddFocused, showShortcuts, selectedTaskIndex, filteredTasks, handleToggleComplete]);
+  }, [quickAddFocused, showShortcuts, selectedTaskIndex, filteredTasks]);
 
   // Just Start - random task picker
   const handleJustStart = (energyLevel?: EnergyLevel) => {
@@ -120,9 +221,6 @@ function App() {
 
     if (availableTasks.length === 0) return;
 
-    // Pick a random task (currently just refreshes the view since focus mode already shows highest priority)
-    // The randomization is implicit - users can shuffle by clearing/setting energy filter
-    
     // Scroll to top to show the selected task
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -336,12 +434,30 @@ function App() {
           <ADHDMode
             tasks={tasks}
             onToggle={handleToggleComplete}
+            onToggleSubtask={handleToggleSubtask}
             onJustStart={handleJustStart}
             onExitADHDMode={toggleADHDMode}
             energyFilter={energyFilter}
             onEnergyFilterChange={setEnergyFilter}
             onClearEnergyFilter={clearEnergyFilter}
             darkMode={darkMode}
+            timerState={{
+              isRunning: timer.isRunning,
+              taskId: timer.taskId,
+              remainingSeconds,
+              duration: timer.duration,
+              progress,
+              isTimeUp,
+            }}
+            onStartTimer={handleStartTimer}
+            onPauseTimer={pauseTimer}
+            onResumeTimer={resumeTimer}
+            onStopTimer={handleStopTimer}
+            onExtendTimer={extendTimer}
+            onSetDuration={setDuration}
+            dailyStats={todayStats}
+            streak={streak}
+            averageAccuracy={getAverageAccuracy()}
           />
         ) : (
         /* Normal Task List */
@@ -372,6 +488,10 @@ function App() {
                 onToggle={handleToggleComplete}
                 onDelete={deleteTask}
                 onUpdate={updateTask}
+                onToggleSubtask={handleToggleSubtask}
+                onAddSubtask={addSubtask}
+                onDeleteSubtask={deleteSubtask}
+                onSetSubtasks={setSubtasks}
                 darkMode={darkMode}
                 isSelected={index === selectedTaskIndex}
               />
@@ -382,7 +502,11 @@ function App() {
 
         {/* Celebration Overlay */}
         {showCelebration && (
-          <CelebrationOverlay message={celebrationMessage} darkMode={darkMode} />
+          <CelebrationOverlay 
+            message={celebrationMessage} 
+            type={celebrationType}
+            darkMode={darkMode} 
+          />
         )}
 
         {/* Shortcuts Modal */}

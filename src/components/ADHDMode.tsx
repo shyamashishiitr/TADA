@@ -1,27 +1,61 @@
 import { useState } from 'react';
-import type { Task, EnergyLevel } from '../types';
+import type { Task, EnergyLevel, DailyStats as DailyStatsType, StreakData } from '../types';
 import { EnergyFilter } from './EnergyFilter';
+import { FocusTimer } from './FocusTimer';
+import { SubtaskList } from './SubtaskList';
+import { DailyStats } from './DailyStats';
 
 interface ADHDModeProps {
   tasks: Task[];
   onToggle: (id: string) => void;
+  onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onJustStart: (energyLevel?: EnergyLevel) => void;
   onExitADHDMode: () => void;
   energyFilter: EnergyLevel | null;
   onEnergyFilterChange: (level: EnergyLevel) => void;
   onClearEnergyFilter: () => void;
   darkMode?: boolean;
+  // Timer props
+  timerState: {
+    isRunning: boolean;
+    taskId: string | null;
+    remainingSeconds: number;
+    duration: number;
+    progress: number;
+    isTimeUp: boolean;
+  };
+  onStartTimer: (taskId: string, duration: number) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onStopTimer: () => void;
+  onExtendTimer: (minutes: number) => void;
+  onSetDuration: (minutes: number) => void;
+  // Stats props
+  dailyStats: DailyStatsType;
+  streak: StreakData;
+  averageAccuracy: number;
 }
 
 export const ADHDMode = ({
   tasks,
   onToggle,
+  onToggleSubtask,
   onJustStart,
   onExitADHDMode,
   energyFilter,
   onEnergyFilterChange,
   onClearEnergyFilter,
   darkMode = false,
+  timerState,
+  onStartTimer,
+  onPauseTimer,
+  onResumeTimer,
+  onStopTimer,
+  onExtendTimer,
+  onSetDuration,
+  dailyStats,
+  streak,
+  averageAccuracy,
 }: ADHDModeProps) => {
   const [showEnergyPicker, setShowEnergyPicker] = useState(false);
 
@@ -67,6 +101,13 @@ export const ADHDMode = ({
   const handleSkipEnergySelection = () => {
     setShowEnergyPicker(false);
     onJustStart();
+  };
+
+  const handleStartFocus = () => {
+    if (currentTask) {
+      const duration = currentTask.estimatedMinutes || 25;
+      onStartTimer(currentTask.id, duration);
+    }
   };
 
   if (showEnergyPicker) {
@@ -189,6 +230,14 @@ export const ADHDMode = ({
 
   return (
     <div className="space-y-6">
+      {/* Daily Stats */}
+      <DailyStats
+        stats={dailyStats}
+        streak={streak}
+        averageAccuracy={averageAccuracy}
+        darkMode={darkMode}
+      />
+
       {/* Energy Filter */}
       <div className="flex justify-center">
         <EnergyFilter
@@ -256,7 +305,7 @@ export const ADHDMode = ({
                 {currentTask.description}
               </p>
             )}
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-3 flex-wrap mb-4">
               {currentTask.estimatedMinutes && (
                 <span
                   className={`px-4 py-2 rounded-lg font-medium ${
@@ -292,26 +341,66 @@ export const ADHDMode = ({
                 </span>
               )}
             </div>
+
+            {/* Subtasks in focus mode - one at a time */}
+            {currentTask.subtasks && currentTask.subtasks.length > 0 && (
+              <div className="mt-6">
+                <SubtaskList
+                  subtasks={currentTask.subtasks}
+                  onToggle={(subtaskId) => onToggleSubtask(currentTask.id, subtaskId)}
+                  showOnlyNext={true}
+                  darkMode={darkMode}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Large Checkbox */}
-          <div className="flex justify-center mb-8">
-            <button
-              onClick={() => onToggle(currentTask.id)}
-              className={`
-                w-32 h-32 rounded-3xl border-4 transition-all hover:scale-110 shadow-2xl
-                flex items-center justify-center
-                ${
-                  darkMode
-                    ? 'border-purple-500 bg-slate-800/50 hover:bg-purple-900/50 hover:border-purple-400'
-                    : 'border-purple-400 bg-white hover:bg-purple-50 hover:border-purple-500'
-                }
-              `}
-              aria-label="Mark as complete"
-            >
-              <span className="text-6xl">✓</span>
-            </button>
-          </div>
+          {/* Focus Timer */}
+          {timerState.taskId === currentTask.id && (timerState.isRunning || timerState.remainingSeconds < timerState.duration * 60) ? (
+            <div className="mb-8">
+              <FocusTimer
+                remainingSeconds={timerState.remainingSeconds}
+                duration={timerState.duration}
+                progress={timerState.progress}
+                isRunning={timerState.isRunning}
+                isTimeUp={timerState.isTimeUp}
+                onPause={onPauseTimer}
+                onResume={onResumeTimer}
+                onStop={onStopTimer}
+                onExtend={onExtendTimer}
+                onSetDuration={onSetDuration}
+                darkMode={darkMode}
+              />
+            </div>
+          ) : (
+            /* Large Checkbox / Start Button */
+            <div className="flex justify-center mb-8">
+              {currentTask.estimatedMinutes ? (
+                <button
+                  onClick={handleStartFocus}
+                  className="px-12 py-6 rounded-3xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl hover:scale-110 transition-all shadow-2xl"
+                >
+                  ▶ Start Focus Timer
+                </button>
+              ) : (
+                <button
+                  onClick={() => onToggle(currentTask.id)}
+                  className={`
+                    w-32 h-32 rounded-3xl border-4 transition-all hover:scale-110 shadow-2xl
+                    flex items-center justify-center
+                    ${
+                      darkMode
+                        ? 'border-purple-500 bg-slate-800/50 hover:bg-purple-900/50 hover:border-purple-400'
+                        : 'border-purple-400 bg-white hover:bg-purple-50 hover:border-purple-500'
+                    }
+                  `}
+                  aria-label="Mark as complete"
+                >
+                  <span className="text-6xl">✓</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Task Counter */}
           <p

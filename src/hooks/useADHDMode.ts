@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { EnergyLevel } from '../types';
+import type { EnergyLevel, CelebrationType } from '../types';
 
 const ADHD_MODE_KEY = 'tada-adhd-mode';
 const ENERGY_FILTER_KEY = 'tada-energy-filter';
@@ -17,6 +17,7 @@ export const useADHDMode = () => {
 
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState('');
+  const [celebrationType, setCelebrationType] = useState<CelebrationType>('task');
 
   useEffect(() => {
     localStorage.setItem(ADHD_MODE_KEY, isADHDMode.toString());
@@ -34,26 +35,58 @@ export const useADHDMode = () => {
     setIsADHDMode((prev) => !prev);
   };
 
-  const celebrate = (taskTitle: string) => {
-    const messages = [
-      `🎉 Nice one! ${taskTitle} is done!`,
-      `✨ Look at you go! ${taskTitle} crushed!`,
-      `🌟 That's done and dusted! ${taskTitle} complete!`,
-      `💪 You're on a roll! ${taskTitle} finished!`,
-      `🎯 Nailed it! ${taskTitle} is history!`,
-      `🔥 Way to go! ${taskTitle} conquered!`,
-      `⚡ Boom! ${taskTitle} completed!`,
-      `🌈 Awesome work! ${taskTitle} done!`,
-    ];
+  const celebrate = (taskTitle: string, type: CelebrationType = 'task') => {
+    setCelebrationType(type);
+
+    let messages: string[] = [];
+
+    switch (type) {
+      case 'subtask':
+        messages = [
+          `✅ One step closer! ${taskTitle}`,
+          `🎯 Micro-win! ${taskTitle} done!`,
+          `✨ Nice! ${taskTitle} complete!`,
+          `💫 Progress! ${taskTitle} checked off!`,
+        ];
+        break;
+      case 'bigwin':
+        messages = [
+          `🎊 ALL DONE! You completed everything today! 🎊`,
+          `🏆 INCREDIBLE! All tasks complete! 🏆`,
+          `🌟 YOU DID IT! Everything's done! 🌟`,
+          `🎉 AMAZING! You conquered your list! 🎉`,
+        ];
+        break;
+      case 'streak':
+        messages = [
+          `🔥 Streak milestone! ${taskTitle}`,
+          `⭐ ${taskTitle} — You're unstoppable!`,
+          `🚀 ${taskTitle} — Keep it going!`,
+          `💪 ${taskTitle} — Incredible consistency!`,
+        ];
+        break;
+      default:
+        messages = [
+          `🎉 Nice one! ${taskTitle} is done!`,
+          `✨ Look at you go! ${taskTitle} crushed!`,
+          `🌟 That's done and dusted! ${taskTitle} complete!`,
+          `💪 You're on a roll! ${taskTitle} finished!`,
+          `🎯 Nailed it! ${taskTitle} is history!`,
+          `🔥 Way to go! ${taskTitle} conquered!`,
+          `⚡ Boom! ${taskTitle} completed!`,
+          `🌈 Awesome work! ${taskTitle} done!`,
+        ];
+    }
     
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
     setCelebrationMessage(randomMessage);
     setShowCelebration(true);
 
-    // Auto-hide celebration after 3 seconds
+    // Auto-hide celebration after duration based on type
+    const duration = type === 'bigwin' || type === 'streak' ? 5000 : type === 'subtask' ? 2000 : 3000;
     setTimeout(() => {
       setShowCelebration(false);
-    }, 3000);
+    }, duration);
   };
 
   const clearEnergyFilter = () => {
@@ -68,6 +101,7 @@ export const useADHDMode = () => {
     clearEnergyFilter,
     showCelebration,
     celebrationMessage,
+    celebrationType,
     celebrate,
   };
 };
