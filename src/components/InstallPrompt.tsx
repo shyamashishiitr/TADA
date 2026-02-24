@@ -14,31 +14,26 @@ export const InstallPrompt = ({ darkMode = false }: InstallPromptProps) => {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    // Check if already dismissed
     const dismissed = localStorage.getItem('install-prompt-dismissed');
     if (dismissed) return;
 
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return;
     }
 
-    // Track visits
     const visits = parseInt(localStorage.getItem('visit-count') || '0', 10);
     localStorage.setItem('visit-count', (visits + 1).toString());
 
-    // Show after 2+ visits or 30+ seconds
     const showAfterTime = setTimeout(() => {
       if (visits >= 1) {
         setShowPrompt(true);
       }
-    }, 30000); // 30 seconds
+    }, 30000);
 
     if (visits >= 2) {
       setShowPrompt(true);
     }
 
-    // Capture the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -54,7 +49,6 @@ export const InstallPrompt = ({ darkMode = false }: InstallPromptProps) => {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      // For iOS/Safari - show instructions
       alert('To install:\n\n1. Tap the Share button\n2. Tap "Add to Home Screen"\n3. Tap "Add"');
       return;
     }
@@ -80,52 +74,59 @@ export const InstallPrompt = ({ darkMode = false }: InstallPromptProps) => {
 
   return (
     <div
-      className={`
-        fixed bottom-20 left-4 right-4 md:bottom-4 md:left-auto md:right-4 md:max-w-sm
-        p-4 rounded-2xl shadow-2xl z-50
-        animate-[slideDown_0.3s_ease-out]
-        ${darkMode
-          ? 'bg-gradient-to-br from-purple-900/95 to-slate-900/95 backdrop-blur-xl border border-purple-500/30'
-          : 'bg-gradient-to-br from-white/95 to-purple-50/95 backdrop-blur-xl border border-purple-200'
-        }
-      `}
+      className="fixed bottom-20 left-4 right-4 md:bottom-4 md:left-auto md:right-4 md:max-w-xs z-50"
+      style={{
+        animation: 'slideUp 0.2s ease-out',
+      }}
     >
-      <button
-        onClick={handleDismiss}
-        className={`
-          absolute top-2 right-2 p-1 rounded-lg transition-all hover:scale-110
-          ${darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}
-        `}
-        aria-label="Dismiss"
+      <div
+        className="p-4 rounded-lg"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          boxShadow: 'var(--shadow-xl)',
+        }}
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2.5 right-2.5 p-1 rounded-md transition-all duration-150"
+          style={{ color: 'var(--color-text-muted)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+          aria-label="Dismiss"
+        >
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
 
-      <div className="flex items-start gap-3 mb-3">
-        <span className="text-3xl">✨</span>
-        <div className="flex-1">
-          <h3 className={`text-lg font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Add TADA to your home screen
+        <div className="pr-6 mb-3">
+          <h3
+            className="text-sm font-semibold mb-0.5"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            Install TADA
           </h3>
-          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p
+            className="text-xs"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
             Get instant access and work offline
           </p>
         </div>
-      </div>
 
-      <button
-        onClick={handleInstallClick}
-        className="
-          w-full py-3 px-4 rounded-xl font-semibold text-white
-          bg-gradient-to-r from-purple-600 to-blue-600
-          hover:from-purple-700 hover:to-blue-700
-          active:scale-95 transition-all shadow-md
-        "
-      >
-        Install App
-      </button>
+        <button
+          onClick={handleInstallClick}
+          className="w-full py-2 px-3 rounded-md text-sm font-medium text-white active:scale-95 transition-all duration-150"
+          style={{ backgroundColor: 'var(--color-accent)' }}
+        >
+          Install
+        </button>
+      </div>
     </div>
   );
 };

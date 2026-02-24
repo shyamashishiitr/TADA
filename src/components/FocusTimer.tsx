@@ -35,11 +35,11 @@ export const FocusTimer = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getColorClass = () => {
+  const getStrokeColor = () => {
     const percentRemaining = (remainingSeconds / (duration * 60)) * 100;
-    if (percentRemaining > 50) return 'stroke-green-500';
-    if (percentRemaining > 25) return 'stroke-yellow-500';
-    return 'stroke-amber-500';
+    if (percentRemaining > 50) return 'var(--color-success)';
+    if (percentRemaining > 25) return 'var(--color-warning)';
+    return 'var(--color-cat-today)';
   };
 
   const quickDurations = [5, 10, 15, 25, 45];
@@ -47,20 +47,19 @@ export const FocusTimer = ({
   if (showDurationPicker && !isRunning) {
     return (
       <div
-        className={`p-6 rounded-2xl shadow-lg ${
-          darkMode
-            ? 'bg-slate-800/90 backdrop-blur border border-slate-700'
-            : 'bg-white/90 backdrop-blur border border-gray-200'
-        }`}
+        className="p-5 rounded-md"
+        style={{
+          backgroundColor: 'var(--color-surface-hover)',
+          border: '1px solid var(--color-border)',
+        }}
       >
         <h3
-          className={`text-xl font-bold mb-4 text-center ${
-            darkMode ? 'text-purple-300' : 'text-purple-700'
-          }`}
+          className="text-sm font-medium mb-3 text-center"
+          style={{ color: 'var(--color-text-primary)' }}
         >
-          How long do you want to focus?
+          Focus duration
         </h3>
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="flex gap-2 justify-center mb-3">
           {quickDurations.map((mins) => (
             <button
               key={mins}
@@ -68,13 +67,16 @@ export const FocusTimer = ({
                 onSetDuration(mins);
                 setShowDurationPicker(false);
               }}
-              className={`px-4 py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
-                duration === mins
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : darkMode
-                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className="px-3 py-2 rounded-md text-xs font-medium transition-all duration-150"
+              style={{
+                backgroundColor: duration === mins
+                  ? 'var(--color-accent)'
+                  : 'var(--color-surface)',
+                color: duration === mins
+                  ? '#fff'
+                  : 'var(--color-text-secondary)',
+                border: `1px solid ${duration === mins ? 'var(--color-accent)' : 'var(--color-border)'}`,
+              }}
             >
               {mins}m
             </button>
@@ -86,11 +88,12 @@ export const FocusTimer = ({
             min="1"
             max="180"
             placeholder="Custom"
-            className={`flex-1 px-4 py-2 border-2 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-              darkMode
-                ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-            }`}
+            className="flex-1 px-3 py-1.5 rounded-md text-xs focus:outline-none"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 const value = parseInt(e.currentTarget.value);
@@ -103,11 +106,12 @@ export const FocusTimer = ({
           />
           <button
             onClick={() => setShowDurationPicker(false)}
-            className={`px-4 py-2 rounded-xl font-medium transition-all hover:scale-105 ${
-              darkMode
-                ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            className="px-3 py-1.5 rounded-md text-xs font-medium"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              color: 'var(--color-text-muted)',
+              border: '1px solid var(--color-border)',
+            }}
           >
             Cancel
           </button>
@@ -118,143 +122,156 @@ export const FocusTimer = ({
 
   return (
     <div
-      className={`p-6 rounded-2xl shadow-lg ${
-        darkMode
-          ? 'bg-slate-800/90 backdrop-blur border border-slate-700'
-          : 'bg-white/90 backdrop-blur border border-gray-200'
-      }`}
+      className="p-5 rounded-md"
+      style={{
+        backgroundColor: 'var(--color-surface-hover)',
+        border: '1px solid var(--color-border)',
+      }}
     >
       {/* Circular Progress */}
-      <div className="flex justify-center mb-6">
-        <div className="relative w-48 h-48">
-          <svg className="w-48 h-48 transform -rotate-90">
-            {/* Background circle */}
+      <div className="flex justify-center mb-5">
+        <div className="relative w-40 h-40">
+          <svg className="w-40 h-40 transform -rotate-90">
             <circle
-              cx="96"
-              cy="96"
-              r="88"
-              className={darkMode ? 'stroke-slate-700' : 'stroke-gray-200'}
-              strokeWidth="8"
+              cx="80"
+              cy="80"
+              r="72"
+              stroke="var(--color-border)"
+              strokeWidth="4"
               fill="none"
             />
-            {/* Progress circle */}
             <circle
-              cx="96"
-              cy="96"
-              r="88"
-              className={`${getColorClass()} transition-all duration-1000`}
-              strokeWidth="8"
+              cx="80"
+              cy="80"
+              r="72"
+              stroke={getStrokeColor()}
+              strokeWidth="4"
               fill="none"
-              strokeDasharray={`${2 * Math.PI * 88}`}
-              strokeDashoffset={`${2 * Math.PI * 88 * (1 - progress / 100)}`}
+              strokeDasharray={`${2 * Math.PI * 72}`}
+              strokeDashoffset={`${2 * Math.PI * 72 * (1 - progress / 100)}`}
               strokeLinecap="round"
+              className="transition-all duration-1000"
             />
           </svg>
-          {/* Time display */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div
-              className={`text-4xl font-black ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              } ${isTimeUp ? 'animate-pulse' : ''}`}
+              className="text-3xl font-semibold tabular-nums"
+              style={{
+                color: 'var(--color-text-primary)',
+                letterSpacing: '-0.02em',
+              }}
             >
               {formatTime(remainingSeconds)}
             </div>
             <div
-              className={`text-sm font-medium mt-1 ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}
+              className="text-xs mt-0.5"
+              style={{ color: isTimeUp ? 'var(--color-success)' : 'var(--color-text-muted)' }}
             >
-              {isTimeUp ? '✨ Time\'s up!' : 'remaining'}
+              {isTimeUp ? "Time's up" : 'remaining'}
             </div>
           </div>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {isRunning ? (
           <>
             <button
               onClick={onPause}
-              className="w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-semibold hover:scale-105 transition-all shadow-md"
+              className="w-full px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-warning)',
+                color: '#000',
+              }}
             >
-              ⏸ Pause
+              Pause
             </button>
             <button
               onClick={onStop}
-              className={`w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
-                darkMode
-                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className="w-full px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
             >
-              ⏹ Stop & Save
+              Stop & Save
             </button>
           </>
         ) : remainingSeconds < duration * 60 ? (
           <>
             <button
               onClick={onResume}
-              className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:scale-105 transition-all shadow-md"
+              className="w-full px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-success)',
+                color: '#fff',
+              }}
             >
-              ▶ Resume
+              Resume
             </button>
             <button
               onClick={onStop}
-              className={`w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
-                darkMode
-                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className="w-full px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
             >
-              ⏹ Stop & Save
+              Stop & Save
             </button>
           </>
         ) : (
           <button
             onClick={() => setShowDurationPicker(true)}
-            className={`w-full px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
-              darkMode
-                ? 'bg-slate-700 text-purple-300 hover:bg-slate-600 border border-purple-500/30'
-                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
-            }`}
+            className="w-full px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)',
+            }}
           >
-            ⏱ Set Duration ({duration}m)
+            Set Duration ({duration}m)
           </button>
         )}
 
         {isTimeUp && (
           <div className="flex gap-2">
-            <button
-              onClick={() => onExtend(5)}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:scale-105 transition-all text-sm"
-            >
-              +5 min
-            </button>
-            <button
-              onClick={() => onExtend(10)}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:scale-105 transition-all text-sm"
-            >
-              +10 min
-            </button>
-            <button
-              onClick={() => onExtend(15)}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:scale-105 transition-all text-sm"
-            >
-              +15 min
-            </button>
+            {[5, 10, 15].map((mins) => (
+              <button
+                key={mins}
+                onClick={() => onExtend(mins)}
+                className="flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all duration-150"
+                style={{
+                  backgroundColor: 'var(--color-accent-subtle)',
+                  color: 'var(--color-accent)',
+                  border: '1px solid var(--color-border)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-accent)';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-accent-subtle)';
+                  e.currentTarget.style.color = 'var(--color-accent)';
+                }}
+              >
+                +{mins}m
+              </button>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Stats */}
+      {/* Status */}
       <div
-        className={`mt-4 text-center text-sm ${
-          darkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}
+        className="mt-3 text-center text-xs"
+        style={{ color: 'var(--color-text-muted)' }}
       >
         {isRunning ? (
-          <>You've been focusing for {Math.floor((duration * 60 - remainingSeconds) / 60)}m</>
+          <>Focusing for {Math.floor((duration * 60 - remainingSeconds) / 60)}m</>
         ) : remainingSeconds < duration * 60 ? (
           <>Paused at {Math.floor((duration * 60 - remainingSeconds) / 60)}m</>
         ) : (

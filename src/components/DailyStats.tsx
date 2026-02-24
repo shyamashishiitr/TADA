@@ -12,65 +12,70 @@ export const DailyStats = ({ stats, streak, averageAccuracy, darkMode = false }:
   const [isExpanded, setIsExpanded] = useState(false);
 
   const formatTime = (minutes: number): string => {
-    if (minutes < 60) return `${minutes} min`;
+    if (minutes < 60) return `${minutes}m`;
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
   const getStreakMessage = (): string => {
-    if (streak.currentStreak === 0) return "Ready to start a new streak! 🌱";
-    if (streak.currentStreak === 1) return "First day done! Keep it going 🎯";
-    if (streak.currentStreak === 3) return "3 days in a row! You're building momentum 🔥";
-    if (streak.currentStreak === 7) return "One week streak! That's incredible 🌟";
-    if (streak.currentStreak === 30) return "30 days! You're a productivity legend 👑";
-    if (streak.currentStreak >= 100) return `${streak.currentStreak} days! Unstoppable! 🚀`;
-    return `${streak.currentStreak} day${streak.currentStreak !== 1 ? 's' : ''} strong! 💪`;
+    if (streak.currentStreak === 0) return "Ready to start a new streak";
+    if (streak.currentStreak === 1) return "First day done — keep going";
+    if (streak.currentStreak === 3) return "3 days in a row — building momentum";
+    if (streak.currentStreak === 7) return "One week streak — incredible";
+    if (streak.currentStreak === 30) return "30 days — you're a legend";
+    if (streak.currentStreak >= 100) return `${streak.currentStreak} days — unstoppable`;
+    return `${streak.currentStreak} day${streak.currentStreak !== 1 ? 's' : ''} strong`;
   };
 
   const getAccuracyMessage = (): string => {
-    if (averageAccuracy === 0) return "Track time to see your accuracy";
-    if (averageAccuracy >= 90 && averageAccuracy <= 110) return "Your estimates are spot-on! 🎯";
-    if (averageAccuracy < 90) return "You tend to finish faster than expected ⚡";
-    if (averageAccuracy > 110 && averageAccuracy < 150) return "Tasks are taking a bit longer 🤔";
-    return "Try adding buffer time to estimates 💡";
-  };
-
-  const getMotivationalMessage = (): string => {
-    const messages = [
-      "You're doing great! 🌟",
-      "Every task completed is progress 💪",
-      "Look at you making things happen! ✨",
-      "Your brain is doing amazing work 🧠",
-      "Small steps, big wins 🎯",
-      "You should be proud 🌈",
-      "Crushing it today! 🔥",
-      "Keep up the awesome work 💫",
-    ];
-    return messages[Math.floor(Math.random() * messages.length)];
+    if (averageAccuracy === 0) return "Track time to see accuracy";
+    if (averageAccuracy >= 90 && averageAccuracy <= 110) return "Estimates are spot-on";
+    if (averageAccuracy < 90) return "Finishing faster than expected";
+    if (averageAccuracy > 110 && averageAccuracy < 150) return "Tasks taking a bit longer";
+    return "Try adding buffer time";
   };
 
   if (!isExpanded) {
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className={`w-full p-4 rounded-2xl transition-all hover:scale-[1.02] shadow-md ${
-          darkMode
-            ? 'bg-gradient-to-br from-slate-800/90 to-purple-900/70 backdrop-blur border border-purple-500/30 text-purple-300'
-            : 'bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur border border-purple-200 text-purple-700'
-        }`}
+        className="w-full p-3 rounded-md transition-all duration-150 text-left"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border-hover)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+        }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">📊</span>
-            <div className="text-left">
-              <div className="font-bold text-sm">Today's Stats</div>
-              <div className="text-xs opacity-80">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-muted)' }}>
+              <rect x="2" y="2" width="12" height="12" rx="2" />
+              <path d="M5 10V8M8 10V6M11 10V4" />
+            </svg>
+            <div>
+              <span
+                className="text-xs font-medium"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                Today's Progress
+              </span>
+              <span
+                className="text-xs ml-2"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
                 {stats.tasksCompleted} task{stats.tasksCompleted !== 1 ? 's' : ''} · {formatTime(stats.focusedMinutes)}
-              </div>
+              </span>
             </div>
           </div>
-          <div className="text-xl">▼</div>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-muted)' }}>
+            <path d="M4 6l4 4 4-4" />
+          </svg>
         </div>
       </button>
     );
@@ -78,171 +83,101 @@ export const DailyStats = ({ stats, streak, averageAccuracy, darkMode = false }:
 
   return (
     <div
-      className={`p-6 rounded-2xl shadow-lg ${
-        darkMode
-          ? 'bg-gradient-to-br from-slate-800/90 to-purple-900/70 backdrop-blur border border-purple-500/30'
-          : 'bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur border border-purple-200'
-      }`}
+      className="rounded-md"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        animation: 'fadeInScale 0.15s ease-out',
+      }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">📊</span>
-          <h3
-            className={`text-xl font-black ${
-              darkMode ? 'text-purple-300' : 'text-purple-700'
-            }`}
-          >
-            Today's Progress
-          </h3>
-        </div>
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: '1px solid var(--color-border)' }}
+      >
+        <h3
+          className="text-sm font-semibold"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
+          Today's Progress
+        </h3>
         <button
           onClick={() => setIsExpanded(false)}
-          className={`p-2 rounded-lg transition-all hover:scale-110 ${
-            darkMode
-              ? 'text-gray-400 hover:text-gray-300'
-              : 'text-gray-600 hover:text-gray-700'
-          }`}
+          className="p-1 rounded-md transition-all duration-150"
+          style={{ color: 'var(--color-text-muted)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
-          ▲
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 10l4-4 4 4" />
+          </svg>
         </button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {/* Tasks Completed */}
-        <div
-          className={`p-4 rounded-xl ${
-            darkMode
-              ? 'bg-slate-900/60 border border-slate-700'
-              : 'bg-white border border-gray-200'
-          }`}
-        >
-          <div className="text-3xl font-black bg-gradient-to-r from-green-500 to-emerald-600 text-transparent bg-clip-text">
-            {stats.tasksCompleted}
-          </div>
+      <div className="grid grid-cols-4 gap-px" style={{ backgroundColor: 'var(--color-border)' }}>
+        {[
+          { label: 'Tasks', value: stats.tasksCompleted },
+          { label: 'Focus', value: formatTime(stats.focusedMinutes) },
+          { label: 'Streak', value: streak.currentStreak },
+          { label: 'Steps', value: stats.subtasksCompleted },
+        ].map((item, i) => (
           <div
-            className={`text-sm font-medium mt-1 ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
+            key={i}
+            className="px-3 py-3 text-center"
+            style={{ backgroundColor: 'var(--color-surface)' }}
           >
-            Tasks completed
+            <div
+              className="text-lg font-semibold tabular-nums"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              {item.value}
+            </div>
+            <div
+              className="text-[11px]"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              {item.label}
+            </div>
           </div>
-        </div>
-
-        {/* Focus Time */}
-        <div
-          className={`p-4 rounded-xl ${
-            darkMode
-              ? 'bg-slate-900/60 border border-slate-700'
-              : 'bg-white border border-gray-200'
-          }`}
-        >
-          <div className="text-3xl font-black bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text">
-            {formatTime(stats.focusedMinutes)}
-          </div>
-          <div
-            className={`text-sm font-medium mt-1 ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
-          >
-            Focused time
-          </div>
-        </div>
-
-        {/* Streak */}
-        <div
-          className={`p-4 rounded-xl ${
-            darkMode
-              ? 'bg-slate-900/60 border border-slate-700'
-              : 'bg-white border border-gray-200'
-          }`}
-        >
-          <div className="text-3xl font-black bg-gradient-to-r from-orange-500 to-red-600 text-transparent bg-clip-text">
-            {streak.currentStreak}
-          </div>
-          <div
-            className={`text-sm font-medium mt-1 ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
-          >
-            Day streak 🔥
-          </div>
-        </div>
-
-        {/* Subtasks */}
-        <div
-          className={`p-4 rounded-xl ${
-            darkMode
-              ? 'bg-slate-900/60 border border-slate-700'
-              : 'bg-white border border-gray-200'
-          }`}
-        >
-          <div className="text-3xl font-black bg-gradient-to-r from-pink-500 to-purple-600 text-transparent bg-clip-text">
-            {stats.subtasksCompleted}
-          </div>
-          <div
-            className={`text-sm font-medium mt-1 ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
-          >
-            Micro-steps done
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Streak Message */}
-      {streak.currentStreak > 0 && (
-        <div
-          className={`p-4 rounded-xl mb-4 ${
-            darkMode
-              ? 'bg-orange-900/30 text-orange-300 border border-orange-700'
-              : 'bg-orange-50 text-orange-700 border border-orange-200'
-          }`}
-        >
-          <div className="font-semibold text-sm">{getStreakMessage()}</div>
-          {streak.longestStreak > streak.currentStreak && (
-            <div className="text-xs mt-1 opacity-80">
-              Your best: {streak.longestStreak} days
-            </div>
-          )}
-        </div>
-      )}
+      {/* Messages */}
+      <div className="px-4 py-3 space-y-2">
+        {streak.currentStreak > 0 && (
+          <div className="flex items-center gap-2">
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: 'var(--color-cat-today)' }}
+            />
+            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {getStreakMessage()}
+              {streak.longestStreak > streak.currentStreak && (
+                <span style={{ color: 'var(--color-text-muted)' }}> · Best: {streak.longestStreak}d</span>
+              )}
+            </span>
+          </div>
+        )}
 
-      {/* Estimate Accuracy */}
-      {stats.estimateAccuracy.length > 0 && (
-        <div
-          className={`p-4 rounded-xl mb-4 ${
-            darkMode
-              ? 'bg-blue-900/30 text-blue-300 border border-blue-700'
-              : 'bg-blue-50 text-blue-700 border border-blue-200'
-          }`}
-        >
-          <div className="font-semibold text-sm mb-1">Time Estimation</div>
-          <div className="text-xs opacity-90">{getAccuracyMessage()}</div>
-          {averageAccuracy > 0 && (
-            <div className="text-xs mt-1 opacity-70">
-              Average: {Math.round(averageAccuracy)}% of estimate
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Motivational Message */}
-      <div
-        className={`p-4 rounded-xl text-center ${
-          darkMode
-            ? 'bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30'
-            : 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200'
-        }`}
-      >
-        <div
-          className={`font-bold text-sm ${
-            darkMode ? 'text-purple-200' : 'text-purple-700'
-          }`}
-        >
-          {getMotivationalMessage()}
-        </div>
+        {stats.estimateAccuracy.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: 'var(--color-cat-week)' }}
+            />
+            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {getAccuracyMessage()}
+              {averageAccuracy > 0 && (
+                <span style={{ color: 'var(--color-text-muted)' }}> · {Math.round(averageAccuracy)}% of estimate</span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

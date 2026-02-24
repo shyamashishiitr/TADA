@@ -3,6 +3,9 @@ const CACHE_NAME = 'tada-v1.0.0';
 const RUNTIME_CACHE = 'tada-runtime';
 const OFFLINE_URL = '/';
 
+// Maximum number of entries in the runtime cache (prevents unbounded growth)
+const MAX_RUNTIME_CACHE_ENTRIES = 100;
+
 // Assets to cache on install
 const PRECACHE_URLS = [
   '/',
@@ -11,7 +14,27 @@ const PRECACHE_URLS = [
   '/manifest.json',
 ];
 
-// Install event - cache core assets
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Trim a cache down to `maxEntries` by deleting the oldest entries.
+ */
+async function trimCache(cacheName, maxEntries) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxEntries) {
+    const excess = keys.length - maxEntries;
+    const toDelete = keys.slice(0, excess);
+    await Promise.all(toDelete.map((request) => cache.delete(request)));
+    console.log(`[SW] Trimmed ${excess} entries from ${cacheName}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Install — cache core assets
+// ---------------------------------------------------------------------------
 self.addEventListener('install', (event) => {
   console.log('[SW] Install event');
   event.waitUntil(
@@ -20,11 +43,13 @@ self.addEventListener('install', (event) => {
         console.log('[SW] Precaching app shell');
         return cache.addAll(PRECACHE_URLS);
       })
-      .then(() => self.skipWaiting()) // Activate immediately
+      .then(() => self.skipWaiting())
   );
 });
 
-// Activate event - cleanup old caches
+// ---------------------------------------------------------------------------
+// Activate — cleanup old caches
+// ---------------------------------------------------------------------------
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activate event');
   event.waitUntil(
@@ -39,11 +64,13 @@ self.addEventListener('activate', (event) => {
             })
         );
       })
-      .then(() => self.clients.claim()) // Take control immediately
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event - network-first for HTML, cache-first for assets
+// ---------------------------------------------------------------------------
+// Fetch — network-first for HTML, cache-first for assets
+// ---------------------------------------------------------------------------
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -59,7 +86,6 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone and cache successful response
           if (response.ok) {
             const responseToCache = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => {
@@ -69,7 +95,6 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback to cache if network fails
           return caches.match(request).then((cached) => {
             return cached || caches.match(OFFLINE_URL);
           });
@@ -83,34 +108,33 @@ self.addEventListener('fetch', (event) => {
     caches.match(request)
       .then((cached) => {
         if (cached) {
-          console.log('[SW] Serving from cache:', request.url);
           return cached;
         }
 
-        // Not in cache, fetch from network
         return fetch(request).then((response) => {
-          // Don't cache non-successful responses
           if (!response || response.status !== 200 || response.type === 'error') {
             return response;
           }
 
-          // Clone and cache the response
           const responseToCache = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
             cache.put(request, responseToCache);
+            // Enforce cache size limit after adding
+            trimCache(RUNTIME_CACHE, MAX_RUNTIME_CACHE_ENTRIES);
           });
 
           return response;
         }).catch((error) => {
           console.log('[SW] Fetch failed:', error);
-          // Could return offline fallback here
           throw error;
         });
       })
   );
 });
 
-// Handle messages from clients
+// ---------------------------------------------------------------------------
+// Messages from clients
+// ---------------------------------------------------------------------------
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     console.log('[SW] Skip waiting requested');
@@ -118,8 +142,9 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// ---------------------------------------------------------------------------
 // Background sync (future enhancement)
+// ---------------------------------------------------------------------------
 self.addEventListener('sync', (event) => {
   console.log('[SW] Background sync:', event.tag);
-  // Could sync tasks to cloud here
 });

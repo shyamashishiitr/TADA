@@ -69,19 +69,16 @@ export const ADHDMode = ({
 
   // Sort by priority and due date
   const sortedTasks = [...incompleteTasks].sort((a, b) => {
-    // Priority weight
     const priorityWeight = { high: 3, medium: 2, low: 1 };
     const priorityDiff = priorityWeight[b.priority] - priorityWeight[a.priority];
     if (priorityDiff !== 0) return priorityDiff;
 
-    // Due date (sooner first)
     if (a.dueDate && !b.dueDate) return -1;
     if (!a.dueDate && b.dueDate) return 1;
     if (a.dueDate && b.dueDate) {
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     }
 
-    // Creation date (newer first for no due date)
     return b.createdAt - a.createdAt;
   });
 
@@ -110,67 +107,90 @@ export const ADHDMode = ({
     }
   };
 
+  const energyLevels: { level: EnergyLevel; label: string; desc: string; color: string }[] = [
+    { level: 'high', label: 'High Energy', desc: 'Ready to tackle challenging tasks', color: 'var(--color-success)' },
+    { level: 'medium', label: 'Medium Energy', desc: 'Can handle moderate tasks', color: 'var(--color-warning)' },
+    { level: 'low', label: 'Low Energy', desc: 'Just need something small and easy', color: 'var(--color-cat-week)' },
+  ];
+
   if (showEnergyPicker) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6">
         <div
-          className={`
-            max-w-2xl w-full p-8 rounded-3xl shadow-2xl text-center
-            ${
-              darkMode
-                ? 'bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl border border-slate-700'
-                : 'bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-xl border border-purple-200'
-            }
-          `}
+          className="max-w-lg w-full p-8 rounded-lg text-center"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-lg)',
+            animation: 'fadeInScale 0.2s ease-out',
+          }}
         >
           <h2
-            className={`text-3xl sm:text-4xl font-black mb-6 ${
-              darkMode ? 'text-purple-300' : 'text-purple-700'
-            }`}
+            className="text-2xl font-semibold mb-2"
+            style={{ color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}
           >
-            How's your energy? ⚡
+            How's your energy?
           </h2>
           <p
-            className={`text-lg mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            className="text-sm mb-6"
+            style={{ color: 'var(--color-text-secondary)' }}
           >
-            I'll pick a task that matches your current energy level
+            We'll match a task to your current energy level
           </p>
-          <div className="space-y-4 mb-6">
-            <button
-              onClick={() => handleEnergySelection('high')}
-              className="w-full px-8 py-6 rounded-2xl font-bold text-xl transition-all hover:scale-105 shadow-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-xl"
-            >
-              🔋 High Energy
-              <p className="text-sm font-normal mt-1 opacity-90">
-                Ready to tackle challenging tasks
-              </p>
-            </button>
-            <button
-              onClick={() => handleEnergySelection('medium')}
-              className="w-full px-8 py-6 rounded-2xl font-bold text-xl transition-all hover:scale-105 shadow-lg bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:shadow-xl"
-            >
-              ⚡ Medium Energy
-              <p className="text-sm font-normal mt-1 opacity-90">
-                Can handle moderate tasks
-              </p>
-            </button>
-            <button
-              onClick={() => handleEnergySelection('low')}
-              className="w-full px-8 py-6 rounded-2xl font-bold text-xl transition-all hover:scale-105 shadow-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl"
-            >
-              🪫 Low Energy
-              <p className="text-sm font-normal mt-1 opacity-90">
-                Just need something small and easy
-              </p>
-            </button>
+          <div className="space-y-2 mb-4">
+            {energyLevels.map(({ level, label, desc, color }) => (
+              <button
+                key={level}
+                onClick={() => handleEnergySelection(level)}
+                className="w-full px-5 py-4 rounded-md text-left transition-all duration-150 group"
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = color;
+                  e.currentTarget.style.backgroundColor = 'var(--color-surface-active)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-border)';
+                  e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: color }}
+                  />
+                  <div>
+                    <div
+                      className="text-sm font-medium"
+                      style={{ color: 'var(--color-text-primary)' }}
+                    >
+                      {label}
+                    </div>
+                    <div
+                      className="text-xs mt-0.5"
+                      style={{ color: 'var(--color-text-muted)' }}
+                    >
+                      {desc}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
           <button
             onClick={handleSkipEnergySelection}
-            className={`text-sm underline transition-colors ${
-              darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'
-            }`}
+            className="text-xs transition-colors duration-150"
+            style={{ color: 'var(--color-text-muted)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--color-text-secondary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--color-text-muted)';
+            }}
           >
-            Skip - surprise me with anything
+            Skip — surprise me
           </button>
         </div>
       </div>
@@ -181,55 +201,79 @@ export const ADHDMode = ({
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6">
         <div
-          className={`
-            max-w-2xl w-full p-12 rounded-3xl shadow-2xl text-center
-            ${
-              darkMode
-                ? 'bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl border border-slate-700'
-                : 'bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-xl border border-purple-200'
-            }
-          `}
+          className="max-w-lg w-full p-10 rounded-lg text-center"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-lg)',
+            animation: 'fadeInScale 0.2s ease-out',
+          }}
         >
-          <div className="text-8xl mb-6 animate-bounce">🎉</div>
-          <h2
-            className={`text-4xl font-black mb-4 ${
-              darkMode ? 'text-purple-300' : 'text-purple-700'
-            }`}
+          <div
+            className="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: 'var(--color-accent-subtle)' }}
           >
-            All Clear!
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: 'var(--color-accent)' }}
+            >
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+          </div>
+          <h2
+            className="text-2xl font-semibold mb-2"
+            style={{ color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}
+          >
+            All Clear
           </h2>
           <p
-            className={`text-xl mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            className="text-sm mb-6"
+            style={{ color: 'var(--color-text-secondary)' }}
           >
             {energyFilter
               ? `No ${energyFilter} energy tasks right now. Try clearing the filter or adding new tasks.`
-              : "You've completed everything! Time to celebrate or add new tasks."}
+              : "You've completed everything. Time to celebrate or add new tasks."}
           </p>
-          {energyFilter && (
+          <div className="flex gap-2 justify-center">
+            {energyFilter && (
+              <button
+                onClick={onClearEnergyFilter}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150"
+                style={{
+                  backgroundColor: 'var(--color-accent)',
+                  color: '#fff',
+                }}
+              >
+                Clear Filter
+              </button>
+            )}
             <button
-              onClick={onClearEnergyFilter}
-              className="mb-4 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium hover:scale-105 transition-all shadow-md"
+              onClick={onExitADHDMode}
+              className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-surface-hover)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
             >
-              Clear Energy Filter
+              Back to All Tasks
             </button>
-          )}
-          <button
-            onClick={onExitADHDMode}
-            className={`px-6 py-3 rounded-xl font-medium transition-all hover:scale-105 shadow-md ${
-              darkMode
-                ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Back to Normal View
-          </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Daily Stats */}
       <DailyStats
         stats={dailyStats}
@@ -248,103 +292,89 @@ export const ADHDMode = ({
         />
       </div>
 
-      {/* Focus View - Single Task */}
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6">
+      {/* Focus View — Single Task */}
+      <div className="flex flex-col items-center justify-center py-8">
         <div
-          className={`
-            max-w-3xl w-full p-10 sm:p-12 rounded-3xl shadow-2xl
-            ${
-              darkMode
-                ? 'bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-xl border-2 border-purple-500/30'
-                : 'bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-xl border-2 border-purple-300'
-            }
-          `}
+          className="max-w-2xl w-full p-8 rounded-lg"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-lg)',
+            animation: 'fadeInScale 0.25s ease-out',
+          }}
         >
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <p
-              className={`text-lg font-semibold mb-2 ${
-                darkMode ? 'text-purple-300' : 'text-purple-700'
-              }`}
+              className="text-xs font-medium uppercase tracking-wide"
+              style={{ color: 'var(--color-text-muted)' }}
             >
-              🎯 Your next thing:
+              Focus on this
             </p>
           </div>
 
           {/* Task Card */}
           <div
-            className={`
-              p-8 rounded-2xl mb-8 border-l-4
-              ${
+            className="p-6 rounded-md mb-6"
+            style={{
+              backgroundColor: 'var(--color-surface-hover)',
+              borderLeft: '2px solid',
+              borderLeftColor:
                 currentTask.priority === 'high'
-                  ? 'border-l-red-500'
+                  ? 'var(--color-danger)'
                   : currentTask.priority === 'medium'
-                  ? 'border-l-yellow-500'
-                  : 'border-l-green-500'
-              }
-              ${
-                darkMode
-                  ? 'bg-slate-900/60 backdrop-blur'
-                  : 'bg-white/80 backdrop-blur border border-gray-100'
-              }
-            `}
+                  ? 'var(--color-warning)'
+                  : 'var(--color-success)',
+            }}
           >
             <h2
-              className={`text-3xl sm:text-4xl font-bold mb-4 ${
-                darkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}
+              className="text-2xl sm:text-3xl font-semibold mb-2"
+              style={{
+                color: 'var(--color-text-primary)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2,
+              }}
             >
               {currentTask.title}
             </h2>
             {currentTask.description && (
               <p
-                className={`text-lg mb-4 ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}
+                className="text-sm mb-3"
+                style={{ color: 'var(--color-text-secondary)' }}
               >
                 {currentTask.description}
               </p>
             )}
-            <div className="flex gap-3 flex-wrap mb-4">
+            <div className="flex gap-3 flex-wrap">
               {currentTask.estimatedMinutes && (
                 <span
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    darkMode
-                      ? 'bg-purple-900/50 text-purple-300 border border-purple-700'
-                      : 'bg-purple-50 text-purple-700 border border-purple-200'
-                  }`}
+                  className="text-xs font-medium px-2 py-1 rounded-md"
+                  style={{
+                    backgroundColor: 'var(--color-surface)',
+                    color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-border)',
+                  }}
                 >
-                  ⏱ ~{currentTask.estimatedMinutes} min
+                  ~{currentTask.estimatedMinutes} min
                 </span>
               )}
               {currentTask.energyLevel && (
                 <span
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    currentTask.energyLevel === 'high'
-                      ? darkMode
-                        ? 'bg-green-900/50 text-green-300 border border-green-700'
-                        : 'bg-green-50 text-green-700 border border-green-200'
-                      : currentTask.energyLevel === 'medium'
-                      ? darkMode
-                        ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700'
-                        : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                      : darkMode
-                      ? 'bg-blue-900/50 text-blue-300 border border-blue-700'
-                      : 'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}
+                  className="text-xs font-medium px-2 py-1 rounded-md capitalize"
+                  style={{
+                    backgroundColor: 'var(--color-surface)',
+                    color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-border)',
+                  }}
                 >
-                  {currentTask.energyLevel === 'high' && '🔋'}
-                  {currentTask.energyLevel === 'medium' && '⚡'}
-                  {currentTask.energyLevel === 'low' && '🪫'}
-                  {' '}
                   {currentTask.energyLevel} energy
                 </span>
               )}
             </div>
 
-            {/* Subtasks in focus mode - one at a time */}
+            {/* Subtasks in focus mode */}
             {currentTask.subtasks && currentTask.subtasks.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-5">
                 <SubtaskList
                   subtasks={currentTask.subtasks}
                   onToggle={(subtaskId) => onToggleSubtask(currentTask.id, subtaskId)}
@@ -357,7 +387,7 @@ export const ADHDMode = ({
 
           {/* Focus Timer */}
           {timerState.taskId === currentTask.id && (timerState.isRunning || timerState.remainingSeconds < timerState.duration * 60) ? (
-            <div className="mb-8">
+            <div className="mb-6">
               <FocusTimer
                 remainingSeconds={timerState.remainingSeconds}
                 duration={timerState.duration}
@@ -373,30 +403,35 @@ export const ADHDMode = ({
               />
             </div>
           ) : (
-            /* Large Checkbox / Start Button */
-            <div className="flex justify-center mb-8">
+            /* Action buttons */
+            <div className="flex justify-center gap-3 mb-6">
               {currentTask.estimatedMinutes ? (
                 <button
                   onClick={handleStartFocus}
-                  className="px-12 py-6 rounded-3xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl hover:scale-110 transition-all shadow-2xl"
+                  className="px-6 py-3 rounded-md text-sm font-medium transition-all duration-150"
+                  style={{
+                    backgroundColor: 'var(--color-accent)',
+                    color: '#fff',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--color-accent)';
+                  }}
                 >
-                  ▶ Start Focus Timer
+                  Start Focus Timer
                 </button>
               ) : (
                 <button
                   onClick={() => onToggle(currentTask.id)}
-                  className={`
-                    w-32 h-32 rounded-3xl border-4 transition-all hover:scale-110 shadow-2xl
-                    flex items-center justify-center
-                    ${
-                      darkMode
-                        ? 'border-purple-500 bg-slate-800/50 hover:bg-purple-900/50 hover:border-purple-400'
-                        : 'border-purple-400 bg-white hover:bg-purple-50 hover:border-purple-500'
-                    }
-                  `}
-                  aria-label="Mark as complete"
+                  className="px-6 py-3 rounded-md text-sm font-medium transition-all duration-150"
+                  style={{
+                    backgroundColor: 'var(--color-success)',
+                    color: '#fff',
+                  }}
                 >
-                  <span className="text-6xl">✓</span>
+                  Mark Complete
                 </button>
               )}
             </div>
@@ -404,37 +439,56 @@ export const ADHDMode = ({
 
           {/* Task Counter */}
           <p
-            className={`text-center text-lg mb-6 ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
+            className="text-center text-xs mb-5"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             {remainingCount > 0 ? (
               <>
-                {remainingCount} more task{remainingCount !== 1 ? 's' : ''} after
-                this
+                {remainingCount} more task{remainingCount !== 1 ? 's' : ''} after this
               </>
             ) : (
-              <>This is your last task! 🎉</>
+              <>This is your last task</>
             )}
           </p>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* Bottom action buttons */}
+          <div
+            className="flex gap-2 justify-center pt-4"
+            style={{ borderTop: '1px solid var(--color-border)' }}
+          >
             <button
               onClick={handleJustStart}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-lg hover:scale-105 transition-all shadow-lg hover:shadow-xl"
+              className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-surface-hover)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-surface-active)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+              }}
             >
-              🎲 Just Start (Random)
+              Random Task
             </button>
             <button
               onClick={onExitADHDMode}
-              className={`px-8 py-4 rounded-2xl font-medium text-lg transition-all hover:scale-105 shadow-md ${
-                darkMode
-                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: 'var(--color-surface-hover)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-surface-active)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+              }}
             >
-              📋 See All Tasks
+              See All Tasks
             </button>
           </div>
         </div>

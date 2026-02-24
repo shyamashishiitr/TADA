@@ -43,20 +43,25 @@ export const SubtaskList = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Progress bar */}
       {totalCount > 0 && !showOnlyNext && (
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className="flex items-center gap-2">
+          <div
+            className="flex-1 h-1 rounded-full overflow-hidden"
+            style={{ backgroundColor: 'var(--color-border)' }}
+          >
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500 rounded-full"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${progress}%`,
+                backgroundColor: 'var(--color-accent)',
+              }}
             />
           </div>
           <span
-            className={`text-sm font-medium ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
+            className="text-[11px] font-medium tabular-nums"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             {completedCount}/{totalCount}
           </span>
@@ -64,43 +69,45 @@ export const SubtaskList = ({
       )}
 
       {/* Subtasks */}
-      <div className="space-y-2">
+      <div className="space-y-0.5">
         {displaySubtasks.map((subtask) => (
           <div
             key={subtask.id}
-            className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-              subtask.completed
-                ? darkMode
-                  ? 'bg-slate-900/40 opacity-60'
-                  : 'bg-gray-50 opacity-60'
-                : darkMode
-                ? 'bg-slate-900/60 border border-slate-700'
-                : 'bg-white border border-gray-200'
-            }`}
+            className="flex items-center gap-2.5 py-1.5 px-2 rounded-md group transition-all duration-150"
+            style={{
+              backgroundColor: 'transparent',
+              opacity: subtask.completed ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <input
               type="checkbox"
               checked={subtask.completed}
               onChange={() => onToggle(subtask.id)}
-              className={`w-5 h-5 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
-                darkMode
-                  ? 'border-purple-500 text-purple-600 focus:ring-purple-500'
-                  : 'border-purple-400 text-purple-600 focus:ring-purple-500'
-              }`}
+              className="tada-checkbox"
+              style={{ width: '16px', height: '16px' }}
             />
             <span
-              className={`flex-1 text-sm ${
-                subtask.completed
-                  ? darkMode
-                    ? 'line-through text-gray-500'
-                    : 'line-through text-gray-400'
-                  : darkMode
-                  ? 'text-gray-200'
-                  : 'text-gray-900'
-              }`}
+              className={`flex-1 text-xs ${subtask.completed ? 'line-through' : ''}`}
+              style={{
+                color: subtask.completed
+                  ? 'var(--color-text-muted)'
+                  : 'var(--color-text-secondary)',
+              }}
             >
               {showOnlyNext && nextIncompleteIndex >= 0 && (
-                <span className="inline-block mr-2 text-xs font-bold bg-gradient-to-r from-purple-600 to-blue-600 text-white px-2 py-0.5 rounded">
+                <span
+                  className="inline-block mr-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: 'var(--color-accent-subtle)',
+                    color: 'var(--color-accent)',
+                  }}
+                >
                   Step {nextIncompleteIndex + 1}/{totalCount}
                 </span>
               )}
@@ -109,25 +116,18 @@ export const SubtaskList = ({
             {onDelete && !subtask.completed && (
               <button
                 onClick={() => onDelete(subtask.id)}
-                className={`p-1 rounded transition-all hover:scale-110 ${
-                  darkMode
-                    ? 'text-gray-600 hover:text-red-400'
-                    : 'text-gray-400 hover:text-red-600'
-                }`}
+                className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                style={{ color: 'var(--color-text-muted)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--color-danger)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--color-text-muted)';
+                }}
                 aria-label="Delete subtask"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}
@@ -138,11 +138,10 @@ export const SubtaskList = ({
       {/* Show remaining count in ADHD mode */}
       {showOnlyNext && nextIncompleteIndex >= 0 && totalCount > nextIncompleteIndex + 1 && (
         <p
-          className={`text-sm text-center ${
-            darkMode ? 'text-gray-400' : 'text-gray-600'
-          }`}
+          className="text-xs text-center"
+          style={{ color: 'var(--color-text-muted)' }}
         >
-          {totalCount - nextIncompleteIndex - 1} more micro-step{totalCount - nextIncompleteIndex - 1 !== 1 ? 's' : ''} after this
+          {totalCount - nextIncompleteIndex - 1} more step{totalCount - nextIncompleteIndex - 1 !== 1 ? 's' : ''} after this
         </p>
       )}
 
@@ -150,7 +149,7 @@ export const SubtaskList = ({
       {onAdd && !showOnlyNext && (
         <div>
           {isAdding ? (
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <input
                 type="text"
                 value={newSubtaskTitle}
@@ -162,17 +161,19 @@ export const SubtaskList = ({
                     setNewSubtaskTitle('');
                   }
                 }}
-                placeholder="New step..."
-                className={`flex-1 px-3 py-2 border-2 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  darkMode
-                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-                }`}
+                placeholder="New step…"
+                className="flex-1 px-2 py-1.5 rounded-md text-xs focus:outline-none"
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-primary)',
+                }}
                 autoFocus
               />
               <button
                 onClick={handleAdd}
-                className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium text-sm hover:scale-105 transition-all"
+                className="px-2.5 py-1.5 rounded-md text-xs font-medium text-white"
+                style={{ backgroundColor: 'var(--color-accent)' }}
               >
                 Add
               </button>
@@ -181,11 +182,11 @@ export const SubtaskList = ({
                   setIsAdding(false);
                   setNewSubtaskTitle('');
                 }}
-                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 ${
-                  darkMode
-                    ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className="px-2.5 py-1.5 rounded-md text-xs font-medium"
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  color: 'var(--color-text-muted)',
+                }}
               >
                 Cancel
               </button>
@@ -193,11 +194,14 @@ export const SubtaskList = ({
           ) : (
             <button
               onClick={() => setIsAdding(true)}
-              className={`text-sm font-medium transition-colors ${
-                darkMode
-                  ? 'text-purple-400 hover:text-purple-300'
-                  : 'text-purple-600 hover:text-purple-700'
-              }`}
+              className="text-xs font-medium transition-colors duration-150"
+              style={{ color: 'var(--color-text-muted)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--color-accent)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--color-text-muted)';
+              }}
             >
               + Add step
             </button>

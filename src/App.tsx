@@ -1,18 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useTasks } from './hooks/useTasks';
 import { useADHDMode } from './hooks/useADHDMode';
 import { useFocusTimer } from './hooks/useFocusTimer';
 import { useDailyStats } from './hooks/useDailyStats';
 import { TaskItem } from './components/TaskItem';
 import { AddTask } from './components/AddTask';
-import { ShortcutsModal } from './components/ShortcutsModal';
-import { ADHDMode } from './components/ADHDMode';
 import { CelebrationOverlay } from './components/CelebrationOverlay';
 import { BottomNav } from './components/BottomNav';
 import { MobileAddTask } from './components/MobileAddTask';
 import { InstallPrompt } from './components/InstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { Sidebar } from './components/Sidebar';
 import type { TaskCategory, EnergyLevel } from './types';
+
+// Lazy-load heavy components that are conditionally rendered
+const ShortcutsModal = lazy(() => import('./components/ShortcutsModal').then(m => ({ default: m.ShortcutsModal })));
+const ADHDMode = lazy(() => import('./components/ADHDMode').then(m => ({ default: m.ADHDMode })));
 
 function App() {
   const { 
@@ -67,7 +70,8 @@ function App() {
   const [showCompleted, setShowCompleted] = useState(true);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
-    return saved === 'true';
+    // Default to dark mode for new users
+    return saved === null ? true : saved === 'true';
   });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [quickAddFocused, setQuickAddFocused] = useState(false);
@@ -83,14 +87,17 @@ function App() {
     }
   }, [darkMode]);
 
-  const filteredTasks = tasks.filter((task) => {
-    if (!showCompleted && task.completed) return false;
-    if (filter === 'all') return true;
-    return task.category === filter;
-  });
+  const filteredTasks = useMemo(
+    () => tasks.filter((task) => {
+      if (!showCompleted && task.completed) return false;
+      if (filter === 'all') return true;
+      return task.category === filter;
+    }),
+    [tasks, showCompleted, filter],
+  );
 
-  const activeTasks = tasks.filter((t) => !t.completed).length;
-  const completedTasks = tasks.filter((t) => t.completed).length;
+  const activeTasks = useMemo(() => tasks.filter((t) => !t.completed).length, [tasks]);
+  const completedTasks = useMemo(() => tasks.filter((t) => t.completed).length, [tasks]);
 
   // Check if all tasks are done for big celebration
   const checkForBigWin = () => {
@@ -111,7 +118,7 @@ function App() {
   };
 
   // Enhanced toggle complete with celebrations and stats
-  const handleToggleComplete = (id: string) => {
+  const handleToggleComplete = useCallback((id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (task && !task.completed) {
       // Stop timer if running for this task
@@ -132,10 +139,10 @@ function App() {
       }
     }
     toggleComplete(id);
-  };
+  }, [tasks, timer, isADHDMode, stopTaskTimer, stopTimer, addFocusedTime, recordTaskCompletion, celebrate, toggleComplete, streak]);
 
   // Handle subtask toggle with celebration
-  const handleToggleSubtask = (taskId: string, subtaskId: string) => {
+  const handleToggleSubtask = useCallback((taskId: string, subtaskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
     const subtask = task?.subtasks?.find((st) => st.id === subtaskId);
     
@@ -147,21 +154,21 @@ function App() {
     }
     
     toggleSubtask(taskId, subtaskId);
-  };
+  }, [tasks, isADHDMode, recordSubtaskCompletion, celebrate, toggleSubtask]);
 
   // Timer handlers
-  const handleStartTimer = (taskId: string, duration: number) => {
+  const handleStartTimer = useCallback((taskId: string, duration: number) => {
     startTaskTimer(taskId);
     startTimer(taskId, duration);
-  };
+  }, [startTaskTimer, startTimer]);
 
-  const handleStopTimer = () => {
+  const handleStopTimer = useCallback(() => {
     if (timer.taskId) {
       const minutesSpent = stopTaskTimer(timer.taskId);
       addFocusedTime(minutesSpent);
     }
     stopTimer();
-  };
+  }, [timer.taskId, stopTaskTimer, addFocusedTime, stopTimer]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -211,7 +218,7 @@ function App() {
   }, [quickAddFocused, showShortcuts, selectedTaskIndex, filteredTasks]);
 
   // Just Start - random task picker
-  const handleJustStart = (energyLevel?: EnergyLevel) => {
+  const handleJustStart = useCallback((energyLevel?: EnergyLevel) => {
     let availableTasks = tasks.filter((t) => !t.completed);
 
     // Filter by energy level if provided
@@ -227,320 +234,281 @@ function App() {
 
     // Scroll to top to show the selected task
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [tasks]);
+
+  // Filter label for header
+  const filterLabels: Record<string, string> = {
+    all: 'All Tasks',
+    inbox: 'Inbox',
+    today: 'Today',
+    week: 'This Week',
+    someday: 'Someday',
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
-        : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'
-    }`}>
-      <div className="max-w-5xl mx-auto px-4 py-6 sm:py-12 sm:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mb-8 sm:mb-12">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className={`text-4xl sm:text-6xl font-black mb-2 transition-colors bg-gradient-to-r ${
-                darkMode 
-                  ? 'from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text' 
-                  : 'from-purple-600 via-pink-600 to-blue-600 text-transparent bg-clip-text'
-              }`}>
+    <div
+      className="min-h-screen transition-colors duration-200"
+      style={{ backgroundColor: 'var(--color-bg)' }}
+    >
+      {/* Desktop Sidebar */}
+      <Sidebar
+        filter={filter}
+        onFilterChange={setFilter}
+        showCompleted={showCompleted}
+        onToggleShowCompleted={() => setShowCompleted(!showCompleted)}
+        isADHDMode={isADHDMode}
+        onToggleADHDMode={toggleADHDMode}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onShowShortcuts={() => setShowShortcuts(true)}
+        tasks={tasks}
+      />
+
+      {/* Main Content */}
+      <main
+        className="min-h-screen transition-all duration-200 md:pl-[var(--sidebar-width)]"
+      >
+        <div className="max-w-3xl mx-auto px-4 py-6 sm:px-8 sm:py-8">
+          {/* Header */}
+          <header className="mb-6">
+            {/* Mobile header with brand */}
+            <div className="flex items-center justify-between mb-4 md:hidden">
+              <h1
+                className="text-lg font-bold"
+                style={{
+                  color: 'var(--color-text-primary)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
                 TADA
               </h1>
-              <p className={`text-sm sm:text-base font-medium transition-colors ${
-                darkMode ? 'text-purple-300' : 'text-purple-700'
-              }`}>
-                Get Things Done, Beautifully ✨
-              </p>
+              <div className="flex gap-1">
+                <button
+                  onClick={toggleADHDMode}
+                  className="p-2 rounded-md transition-all duration-150"
+                  style={{
+                    color: isADHDMode ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                    backgroundColor: isADHDMode ? 'var(--color-accent-subtle)' : 'transparent',
+                  }}
+                  aria-label="Toggle Focus Mode"
+                >
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="8" cy="8" r="6" />
+                    <circle cx="8" cy="8" r="2" />
+                    <path d="M8 2v1M8 13v1M2 8h1M13 8h1" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 rounded-md transition-all duration-150"
+                  style={{ color: 'var(--color-text-muted)' }}
+                  aria-label="Toggle dark mode"
+                >
+                  {darkMode ? (
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="8" cy="8" r="3" />
+                      <path d="M8 1.5v1M8 13.5v1M2.75 2.75l.7.7M12.55 12.55l.7.7M1.5 8h1M13.5 8h1M2.75 13.25l.7-.7M12.55 3.45l.7-.7" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13.5 8.5a5.5 5.5 0 01-6-6 5.5 5.5 0 106 6z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2 sm:gap-3">
-              <button
-                onClick={toggleADHDMode}
-                className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-sm sm:text-base ${
-                  isADHDMode
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
-                    : darkMode
-                    ? 'bg-slate-800/80 backdrop-blur text-purple-300 hover:bg-slate-700/80 border border-purple-500/20'
-                    : 'bg-white/90 backdrop-blur text-purple-700 hover:bg-white border border-purple-200'
-                }`}
-                aria-label="Toggle ADHD Mode"
-                title="ADHD Mode - Focus on one task at a time"
-              >
-                <span className="mr-2">🧠</span>
-                ADHD Mode
-              </button>
-              <button
-                onClick={() => setShowShortcuts(true)}
-                className={`p-2.5 sm:p-3 rounded-xl transition-all hover:scale-105 shadow-md ${
-                  darkMode 
-                    ? 'bg-slate-800/80 backdrop-blur text-purple-300 hover:bg-slate-700/80 border border-purple-500/20' 
-                    : 'bg-white/90 backdrop-blur text-purple-600 hover:bg-white border border-purple-200'
-                }`}
-                aria-label="Keyboard shortcuts"
-                title="Keyboard shortcuts (?)"
-              >
-                <span className="text-lg">⌨️</span>
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2.5 sm:p-3 rounded-xl transition-all hover:scale-105 shadow-md ${
-                  darkMode 
-                    ? 'bg-slate-800/80 backdrop-blur text-yellow-300 hover:bg-slate-700/80 border border-yellow-500/20' 
-                    : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-                }`}
-                aria-label="Toggle dark mode"
-              >
-                <span className="text-lg">{darkMode ? '☀️' : '🌙'}</span>
-              </button>
-            </div>
-          </div>
-          
-          {/* Stats Cards - Hidden in ADHD Mode */}
+
+            {/* Section title + progress bar */}
+            {!isADHDMode && (
+              <div>
+                <h2
+                  className="text-2xl font-semibold mb-1"
+                  style={{
+                    color: 'var(--color-text-primary)',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {filterLabels[filter] || 'All Tasks'}
+                </h2>
+
+                {/* Progress indicator */}
+                <div className="flex items-center gap-3 mt-3">
+                  <div
+                    className="flex-1 h-1 rounded-full overflow-hidden"
+                    style={{ backgroundColor: 'var(--color-border)' }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: `${activeTasks + completedTasks > 0 ? (completedTasks / (activeTasks + completedTasks)) * 100 : 0}%`,
+                        backgroundColor: 'var(--color-success)',
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-xs font-medium tabular-nums whitespace-nowrap"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    {completedTasks} of {activeTasks + completedTasks} done
+                  </span>
+                </div>
+              </div>
+            )}
+          </header>
+
+          {/* Add Task (command bar) - Hidden in ADHD Mode */}
           {!isADHDMode && (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
-            <div className={`p-4 sm:p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.02] ${
-              darkMode 
-                ? 'bg-gradient-to-br from-blue-900/50 to-blue-800/30 backdrop-blur border border-blue-500/20' 
-                : 'bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200'
-            }`}>
-              <div className={`text-2xl sm:text-3xl font-bold mb-1 ${
-                darkMode ? 'text-blue-300' : 'text-blue-700'
-              }`}>
-                {activeTasks}
-              </div>
-              <div className={`text-xs sm:text-sm font-medium ${
-                darkMode ? 'text-blue-400' : 'text-blue-600'
-              }`}>
-                Active Tasks
-              </div>
-            </div>
-            <div className={`p-4 sm:p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.02] ${
-              darkMode 
-                ? 'bg-gradient-to-br from-green-900/50 to-green-800/30 backdrop-blur border border-green-500/20' 
-                : 'bg-gradient-to-br from-green-100 to-green-50 border border-green-200'
-            }`}>
-              <div className={`text-2xl sm:text-3xl font-bold mb-1 ${
-                darkMode ? 'text-green-300' : 'text-green-700'
-              }`}>
-                {completedTasks}
-              </div>
-              <div className={`text-xs sm:text-sm font-medium ${
-                darkMode ? 'text-green-400' : 'text-green-600'
-              }`}>
-                Completed
-              </div>
-            </div>
-          </div>
-          )}
-        </header>
-
-        {/* Filters - Hidden in ADHD Mode */}
-        {!isADHDMode && (
-        <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
-              filter === 'all'
-                ? darkMode
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-purple-500/50'
-                  : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-purple-500/30'
-                : darkMode
-                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
-                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('today')}
-            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
-              filter === 'today'
-                ? darkMode
-                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-orange-500/50'
-                  : 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-orange-500/30'
-                : darkMode
-                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
-                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-            }`}
-          >
-            🔥 Today
-          </button>
-          <button
-            onClick={() => setFilter('week')}
-            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
-              filter === 'week'
-                ? darkMode
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-blue-500/50'
-                  : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-blue-500/30'
-                : darkMode
-                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
-                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-            }`}
-          >
-            📅 Week
-          </button>
-          <button
-            onClick={() => setFilter('inbox')}
-            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
-              filter === 'inbox'
-                ? darkMode
-                  ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-gray-500/50'
-                  : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-500/30'
-                : darkMode
-                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
-                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-            }`}
-          >
-            📥 Inbox
-          </button>
-          <button
-            onClick={() => setFilter('someday')}
-            className={`px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
-              filter === 'someday'
-                ? darkMode
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
-                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-purple-500/30'
-                : darkMode
-                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
-                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-            }`}
-          >
-            💭 Someday
-          </button>
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className={`ml-auto px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base shadow-md hover:scale-105 ${
-              darkMode
-                ? 'bg-slate-800/80 backdrop-blur text-gray-300 hover:bg-slate-700/80 border border-slate-700'
-                : 'bg-white/90 backdrop-blur text-gray-700 hover:bg-white border border-gray-200'
-            }`}
-          >
-            {showCompleted ? '👁️ Hide' : '👁️ Show'}
-          </button>
-        </div>
-        )}
-
-        {/* Add Task - Hidden in ADHD Mode */}
-        {!isADHDMode && (
-        <div className="mb-6">
-          <AddTask 
-            ref={addTaskRef}
-            onAdd={addTask} 
-            darkMode={darkMode}
-            onFocus={() => setQuickAddFocused(true)}
-            onBlur={() => setQuickAddFocused(false)}
-          />
-        </div>
-        )}
-
-        {/* ADHD Mode View */}
-        {isADHDMode ? (
-          <ADHDMode
-            tasks={tasks}
-            onToggle={handleToggleComplete}
-            onToggleSubtask={handleToggleSubtask}
-            onJustStart={handleJustStart}
-            onExitADHDMode={toggleADHDMode}
-            energyFilter={energyFilter}
-            onEnergyFilterChange={setEnergyFilter}
-            onClearEnergyFilter={clearEnergyFilter}
-            darkMode={darkMode}
-            timerState={{
-              isRunning: timer.isRunning,
-              taskId: timer.taskId,
-              remainingSeconds,
-              duration: timer.duration,
-              progress,
-              isTimeUp,
-            }}
-            onStartTimer={handleStartTimer}
-            onPauseTimer={pauseTimer}
-            onResumeTimer={resumeTimer}
-            onStopTimer={handleStopTimer}
-            onExtendTimer={extendTimer}
-            onSetDuration={setDuration}
-            dailyStats={todayStats}
-            streak={streak}
-            averageAccuracy={getAverageAccuracy()}
-          />
-        ) : (
-        /* Normal Task List */
-        <div className="space-y-4">
-          {filteredTasks.length === 0 ? (
-            <div className={`text-center py-16 sm:py-20 rounded-2xl transition-colors shadow-lg ${
-              darkMode ? 'bg-slate-800/50 backdrop-blur border border-slate-700' : 'bg-white/70 backdrop-blur border border-gray-200'
-            }`}>
-              <div className="text-6xl sm:text-7xl mb-4">🎉</div>
-              <p className={`text-xl sm:text-2xl font-semibold mb-2 ${
-                darkMode ? 'text-gray-200' : 'text-gray-800'
-              }`}>
-                All Clear!
-              </p>
-              <p className={`text-sm sm:text-base ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                {filter === 'all'
-                  ? 'Add your first task to get started'
-                  : `No tasks in ${filter}`}
-              </p>
-            </div>
-          ) : (
-            filteredTasks.map((task, index) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={handleToggleComplete}
-                onDelete={deleteTask}
-                onUpdate={updateTask}
-                onToggleSubtask={handleToggleSubtask}
-                onAddSubtask={addSubtask}
-                onDeleteSubtask={deleteSubtask}
-                onSetSubtasks={setSubtasks}
+            <div className="mb-5">
+              <AddTask 
+                ref={addTaskRef}
+                onAdd={addTask} 
                 darkMode={darkMode}
-                isSelected={index === selectedTaskIndex}
+                onFocus={() => setQuickAddFocused(true)}
+                onBlur={() => setQuickAddFocused(false)}
               />
-            ))
+            </div>
+          )}
+
+          {/* ADHD Mode View */}
+          {isADHDMode ? (
+            <Suspense fallback={null}>
+            <ADHDMode
+              tasks={tasks}
+              onToggle={handleToggleComplete}
+              onToggleSubtask={handleToggleSubtask}
+              onJustStart={handleJustStart}
+              onExitADHDMode={toggleADHDMode}
+              energyFilter={energyFilter}
+              onEnergyFilterChange={setEnergyFilter}
+              onClearEnergyFilter={clearEnergyFilter}
+              darkMode={darkMode}
+              timerState={{
+                isRunning: timer.isRunning,
+                taskId: timer.taskId,
+                remainingSeconds,
+                duration: timer.duration,
+                progress,
+                isTimeUp,
+              }}
+              onStartTimer={handleStartTimer}
+              onPauseTimer={pauseTimer}
+              onResumeTimer={resumeTimer}
+              onStopTimer={handleStopTimer}
+              onExtendTimer={extendTimer}
+              onSetDuration={setDuration}
+              dailyStats={todayStats}
+              streak={streak}
+              averageAccuracy={getAverageAccuracy()}
+            />
+            </Suspense>
+          ) : (
+            /* Normal Task List */
+            <div className="space-y-1">
+              {filteredTasks.length === 0 ? (
+                <div
+                  className="text-center py-20 rounded-lg"
+                  style={{ animation: 'fadeIn 0.3s ease-out' }}
+                >
+                  <div
+                    className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    style={{
+                      backgroundColor: 'var(--color-surface-hover)',
+                    }}
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ color: 'var(--color-text-muted)' }}
+                    >
+                      <path d="M9 11l3 3L22 4" />
+                      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                    </svg>
+                  </div>
+                  <p
+                    className="text-base font-medium mb-1"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {filter === 'all' ? 'No tasks yet' : `No tasks in ${filterLabels[filter]}`}
+                  </p>
+                  <p
+                    className="text-sm"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    Press <kbd
+                      className="px-1.5 py-0.5 text-xs font-mono rounded"
+                      style={{
+                        backgroundColor: 'var(--color-surface-hover)',
+                        border: '1px solid var(--color-border)',
+                      }}
+                    >⌘K</kbd> to add your first task
+                  </p>
+                </div>
+              ) : (
+                filteredTasks.map((task, index) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onToggle={handleToggleComplete}
+                    onDelete={deleteTask}
+                    onUpdate={updateTask}
+                    onToggleSubtask={handleToggleSubtask}
+                    onAddSubtask={addSubtask}
+                    onDeleteSubtask={deleteSubtask}
+                    onSetSubtasks={setSubtasks}
+                    darkMode={darkMode}
+                    isSelected={index === selectedTaskIndex}
+                  />
+                ))
+              )}
+            </div>
           )}
         </div>
-        )}
+      </main>
 
-        {/* Celebration Overlay */}
-        {showCelebration && (
-          <CelebrationOverlay 
-            message={celebrationMessage} 
-            type={celebrationType}
-            darkMode={darkMode} 
-          />
-        )}
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <CelebrationOverlay 
+          message={celebrationMessage} 
+          type={celebrationType}
+          darkMode={darkMode} 
+        />
+      )}
 
-        {/* Shortcuts Modal */}
-        {showShortcuts && (
+      {/* Shortcuts Modal */}
+      {showShortcuts && (
+        <Suspense fallback={null}>
           <ShortcutsModal 
             onClose={() => setShowShortcuts(false)} 
             darkMode={darkMode}
           />
-        )}
+        </Suspense>
+      )}
 
-        {/* Mobile Bottom Navigation (hidden on desktop) */}
-        <BottomNav
-          filter={filter}
-          onFilterChange={setFilter}
-          isADHDMode={isADHDMode}
-          onToggleADHDMode={toggleADHDMode}
+      {/* Mobile Bottom Navigation (hidden on desktop) */}
+      <BottomNav
+        filter={filter}
+        onFilterChange={setFilter}
+        isADHDMode={isADHDMode}
+        onToggleADHDMode={toggleADHDMode}
+        darkMode={darkMode}
+      />
+
+      {/* Mobile Add Task (hidden on desktop and in ADHD mode) */}
+      {!isADHDMode && (
+        <MobileAddTask
+          onAdd={addTask}
           darkMode={darkMode}
         />
+      )}
 
-        {/* Mobile Add Task (hidden on desktop and in ADHD mode) */}
-        {!isADHDMode && (
-          <MobileAddTask
-            onAdd={addTask}
-            darkMode={darkMode}
-          />
-        )}
-
-        {/* Install Prompt */}
-        <InstallPrompt darkMode={darkMode} />
-      </div>
+      {/* Install Prompt */}
+      <InstallPrompt darkMode={darkMode} />
 
       {/* Offline Indicator */}
       <OfflineIndicator darkMode={darkMode} />

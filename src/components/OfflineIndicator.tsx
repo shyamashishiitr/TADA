@@ -24,21 +24,22 @@ export const OfflineIndicator = ({ darkMode = false }: OfflineIndicatorProps) =>
 
   return (
     <div
-      className={`
-        fixed top-0 left-0 right-0 z-50
-        py-2 px-4 text-center text-sm font-medium
-        animate-[slideDown_0.3s_ease-out]
-        ${darkMode
-          ? 'bg-orange-900/90 text-orange-200 border-b border-orange-700'
-          : 'bg-orange-100 text-orange-800 border-b border-orange-300'
-        }
-      `}
+      className="fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center text-xs font-medium"
       style={{
         paddingTop: 'calc(0.5rem + env(safe-area-inset-top))',
+        backgroundColor: 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+        color: 'var(--color-warning)',
+        animation: 'slideDown 0.2s ease-out',
       }}
     >
-      <span className="mr-2">📴</span>
-      You're offline. Changes will sync when you're back online.
+      <span className="flex items-center justify-center gap-1.5">
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: 'var(--color-warning)' }}
+        />
+        Offline — changes will sync when you're back
+      </span>
     </div>
   );
 };

@@ -11,7 +11,6 @@ interface MakeItTinyProps {
 const generateSubtasks = (title: string): SubTask[] => {
   const lower = title.toLowerCase();
   
-  // Pattern matching for common task types
   if (lower.includes('write') || lower.includes('blog') || lower.includes('article') || lower.includes('essay')) {
     return [
       { id: crypto.randomUUID(), title: 'Choose topic and angle', completed: false },
@@ -114,7 +113,7 @@ const generateSubtasks = (title: string): SubTask[] => {
     ];
   }
   
-  // Generic fallback - break into smaller pieces
+  // Generic fallback
   const words = title.split(' ');
   if (words.length <= 3) {
     return [
@@ -138,27 +137,31 @@ export const MakeItTiny = ({ taskTitle, onGenerate, darkMode = false }: MakeItTi
   const handleGenerate = () => {
     setIsGenerating(true);
     
-    // Simulate AI "thinking" time
     setTimeout(() => {
       const subtasks = generateSubtasks(taskTitle);
       onGenerate(subtasks);
       setIsGenerating(false);
-    }, 1200); // 1.2 seconds for realism
+    }, 1200);
   };
 
   if (isGenerating) {
     return (
       <div
-        className={`px-4 py-3 rounded-xl font-medium transition-all ${
-          darkMode
-            ? 'bg-purple-900/30 text-purple-300 border border-purple-700 animate-pulse'
-            : 'bg-purple-50 text-purple-700 border border-purple-300 animate-pulse'
-        }`}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium"
+        style={{
+          backgroundColor: 'var(--color-accent-subtle)',
+          color: 'var(--color-accent)',
+          animation: 'pulse-subtle 1.5s ease-in-out infinite',
+        }}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          <span>Breaking it down...</span>
-        </div>
+        <div
+          className="w-3 h-3 border-[1.5px] border-current rounded-full"
+          style={{
+            borderTopColor: 'transparent',
+            animation: 'spin 0.6s linear infinite',
+          }}
+        />
+        <span>Breaking it down…</span>
       </div>
     );
   }
@@ -166,14 +169,27 @@ export const MakeItTiny = ({ taskTitle, onGenerate, darkMode = false }: MakeItTi
   return (
     <button
       onClick={handleGenerate}
-      className={`px-4 py-3 rounded-xl font-medium transition-all hover:scale-105 shadow-sm ${
-        darkMode
-          ? 'bg-purple-900/30 text-purple-300 hover:bg-purple-900/50 border border-purple-700'
-          : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
-      }`}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
+      style={{
+        backgroundColor: 'var(--color-surface-hover)',
+        color: 'var(--color-text-muted)',
+        border: '1px solid var(--color-border)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = 'var(--color-accent-subtle)';
+        e.currentTarget.style.color = 'var(--color-accent)';
+        e.currentTarget.style.borderColor = 'var(--color-accent)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)';
+        e.currentTarget.style.color = 'var(--color-text-muted)';
+        e.currentTarget.style.borderColor = 'var(--color-border)';
+      }}
       title="Break this task into smaller steps"
     >
-      <span className="mr-2">🪄</span>
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 4h12M2 8h8M2 12h5" />
+      </svg>
       Make it Tiny
     </button>
   );
